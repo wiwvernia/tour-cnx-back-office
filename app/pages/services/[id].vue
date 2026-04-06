@@ -28,6 +28,7 @@
               variant="outlined"
               class="mb-3"
               placeholder="e.g. 3-Day Detox Program"
+              persistent-placeholder
               @input="autoSlug"
             />
             <v-textarea
@@ -37,6 +38,7 @@
               rows="3"
               class="mb-3"
               placeholder="A brief summary shown in listings and cards (max 200 chars)"
+              persistent-placeholder
               counter="200"
             />
           </v-card-text>
@@ -87,7 +89,8 @@
                 :counter="60"
                 hint="Recommended: 50-60 characters"
                 persistent-hint
-                :placeholder="form.title"
+                placeholder="Your Meta Title"
+                persistent-placeholder
               />
               <v-textarea
                 v-model="form.metaDescription"
@@ -98,7 +101,8 @@
                 :counter="160"
                 hint="Recommended: 140-160 characters"
                 persistent-hint
-                :placeholder="form.description"
+                placeholder="Your Meta Description"
+                persistent-placeholder
               />
             </v-card-text>
           </v-expand-transition>

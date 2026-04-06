@@ -47,6 +47,7 @@
             variant="outlined"
             class="mb-3"
             placeholder="e.g. Health & Wellness"
+            persistent-placeholder
             @input="autoSlug"
           />
           <v-text-field
