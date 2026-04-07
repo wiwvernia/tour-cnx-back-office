@@ -7,8 +7,8 @@
         <p class="text-sm text-gray-500 mt-1">Manage company details and contact information displayed on the website</p>
       </div>
       <div class="d-flex gap-2">
-        <v-btn variant="outlined" color="primary" class="rounded-lg">Discard</v-btn>
-        <v-btn color="primary" prepend-icon="mdi-check" class="rounded-lg">Save Changes</v-btn>
+        <AppBtn variant="outline" color="secondary">Discard</AppBtn>
+        <AppBtn color="primary"><i class="mdi mdi-check mr-1" />Save Changes</AppBtn>
       </div>
     </div>
 
@@ -63,10 +63,10 @@
               @click="triggerUpload"
             >
               <div v-if="!form.officeImage">
-                <v-icon size="48" color="slate-300">mdi-image-plus</v-icon>
-                <p class="mt-2 text-slate-500">Upload office background image</p>
+                <i class="mdi mdi-image-plus text-5xl text-gray-300" />
+                <p class="mt-2 text-gray-400">Upload office background image</p>
               </div>
-              <v-img v-else :src="form.officeImage" class="rounded max-h-[300px]" />
+              <img v-else :src="form.officeImage" class="rounded max-h-[300px] mx-auto object-cover" />
             </div>
             <input ref="fileInput" type="file" class="d-none" accept="image/*" @change="handleImageUpload" />
           </v-card-text>

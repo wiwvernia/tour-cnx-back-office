@@ -9,63 +9,71 @@
 
     <!-- Filters -->
     <v-card class="mb-4 pa-4" shadow="sm">
-      <v-row dense align="center">
-        <v-col cols="12" md="4">
-          <v-text-field v-model="search" clearable placeholder="Search by name or email…" prepend-inner-icon="mdi-magnify" variant="outlined" density="compact" hide-details />
-        </v-col>
-        <v-col cols="12" md="3">
-          <v-select v-model="filterStatus" :items="['New', 'Read', 'Replied']" label="Status" variant="outlined" density="compact" hide-details clearable />
-        </v-col>
-      </v-row>
+      <div class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]">
+          <AppInput v-model="search" label="Search" placeholder="Search by name or email…" />
+        </div>
+        <div class="w-40">
+          <AppSelect
+            v-model="filterStatus"
+            label="Status"
+            :options="[{ label: 'All', value: null }, 'New', 'Read', 'Replied']"
+          />
+        </div>
+      </div>
     </v-card>
 
-    <!-- Inquiries Table -->
+    <!-- Table -->
     <v-card shadow="sm">
-      <v-table>
-        <thead>
-          <tr>
-            <th width="25%">Customer</th>
-            <th>Subject</th>
-            <th width="15%">Phone</th>
-            <th width="15%">Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in filteredInquiries" :key="item.id">
-            <td>
-              <div class="py-2">
-                <div class="font-medium text-slate-800">{{ item.name }}</div>
-                <div class="text-xs text-slate-500">{{ item.email }}</div>
-              </div>
-            </td>
-            <td>
-              <div class="text-sm">
-                <v-chip v-if="item.status === 'New'" size="x-small" color="error" class="mr-2" variant="flat">NEW</v-chip>
-                {{ item.subject }}
-              </div>
-            </td>
-            <td class="text-sm text-slate-600">{{ item.phone }}</td>
-            <td class="text-xs text-slate-500">{{ item.date }}</td>
-            <td>
-              <v-chip size="x-small" :color="getStatusColor(item.status)" variant="tonal">
-                {{ item.status }}
-              </v-chip>
-            </td>
-            <td>
-              <v-btn size="small" variant="text" color="primary" :to="'/contacts/' + item.id" icon="mdi-eye" />
-              <v-btn size="small" variant="text" color="error" @click="deleteInquiry(item.id)" icon="mdi-delete" />
-            </td>
-          </tr>
-          <tr v-if="filteredInquiries.length === 0">
-            <td colspan="6" class="text-center text-slate-400 py-12">
-              <v-icon size="48" class="mb-2">mdi-email-off-outline</v-icon>
-              <div>No inquiries found</div>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
+      <AppTable :columns="columns" :rows="filteredInquiries" row-key="id">
+        <template #customer="{ row }">
+          <div class="py-2">
+            <div class="font-medium text-gray-800">{{ row.name }}</div>
+            <div class="text-xs text-gray-400">{{ row.email }}</div>
+          </div>
+        </template>
+
+        <template #subject="{ row }">
+          <div class="flex items-center gap-2 text-sm">
+            <span
+              v-if="row.status === 'New'"
+              class="inline-block px-1.5 py-0.5 text-xs font-bold rounded bg-red-500 text-white"
+            >NEW</span>
+            {{ row.subject }}
+          </div>
+        </template>
+
+        <template #phone="{ row }">
+          <span class="text-sm text-gray-600">{{ row.phone }}</span>
+        </template>
+
+        <template #date="{ row }">
+          <span class="text-xs text-gray-400">{{ row.date }}</span>
+        </template>
+
+        <template #status="{ row }">
+          <span
+            class="inline-block px-2 py-0.5 text-xs font-medium rounded"
+            :class="statusClass(row.status)"
+          >{{ row.status }}</span>
+        </template>
+
+        <template #actions="{ row }">
+          <div class="flex gap-1">
+            <AppBtn variant="ghost" color="primary" size="sm" :to="'/contacts/' + row.id" icon>
+              <i class="mdi mdi-eye" />
+            </AppBtn>
+            <AppBtn variant="ghost" color="danger" size="sm" icon @click="deleteInquiry(row.id)">
+              <i class="mdi mdi-delete" />
+            </AppBtn>
+          </div>
+        </template>
+      </AppTable>
+
+      <div v-if="filteredInquiries.length === 0" class="py-16 text-center text-gray-400">
+        <i class="mdi mdi-email-off-outline text-5xl mb-2 block" />
+        No inquiries found
+      </div>
     </v-card>
   </div>
 </template>
@@ -76,6 +84,15 @@ import { ref, computed } from 'vue'
 const search = ref('')
 const filterStatus = ref(null)
 
+const columns = [
+  { key: 'customer', label: 'Customer', class: 'w-1/4' },
+  { key: 'subject', label: 'Subject' },
+  { key: 'phone', label: 'Phone', class: 'w-[15%]' },
+  { key: 'date', label: 'Date', class: 'w-[15%]' },
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: 'Actions' },
+]
+
 const inquiries = ref([
   {
     id: 1,
@@ -85,7 +102,7 @@ const inquiries = ref([
     subject: 'สอบถามข้อมูลทริปเชียงใหม่',
     message: 'รบกวนขอตารางเวลาทริป 3 วัน 2 คืน เดือนหน้าด้วยครับ',
     status: 'New',
-    date: '2024-04-07 14:30'
+    date: '2024-04-07 14:30',
   },
   {
     id: 2,
@@ -95,7 +112,7 @@ const inquiries = ref([
     subject: 'Car Rental with Driver Inquiry',
     message: 'Do you provide pick up from the airport?',
     status: 'Read',
-    date: '2024-04-06 09:15'
+    date: '2024-04-06 09:15',
   },
   {
     id: 3,
@@ -105,26 +122,26 @@ const inquiries = ref([
     subject: 'ติดต่อร่วมธุรกิจ',
     message: 'ต้องการเสนอพื้นที่ให้เช่าจอดรถครับ',
     status: 'Replied',
-    date: '2024-04-05 11:00'
-  }
+    date: '2024-04-05 11:00',
+  },
 ])
 
-const filteredInquiries = computed(() => {
-  return inquiries.value.filter(i => {
-    const matchSearch = !search.value || 
-                        i.name.toLowerCase().includes(search.value.toLowerCase()) ||
-                        i.email.toLowerCase().includes(search.value.toLowerCase())
+const filteredInquiries = computed(() =>
+  inquiries.value.filter(i => {
+    const matchSearch = !search.value ||
+      i.name.toLowerCase().includes(search.value.toLowerCase()) ||
+      i.email.toLowerCase().includes(search.value.toLowerCase())
     const matchStatus = !filterStatus.value || i.status === filterStatus.value
     return matchSearch && matchStatus
   })
-})
+)
 
-function getStatusColor(status) {
+function statusClass(status) {
   switch (status) {
-    case 'New': return 'error'
-    case 'Read': return 'primary'
-    case 'Replied': return 'success'
-    default: return 'slate'
+    case 'New': return 'bg-red-100 text-red-700'
+    case 'Read': return 'bg-blue-100 text-blue-700'
+    case 'Replied': return 'bg-green-100 text-green-700'
+    default: return 'bg-gray-100 text-gray-600'
   }
 }
 
