@@ -15,6 +15,10 @@
         <v-list-item prepend-icon="mdi-tag-text" title="Article Categories" to="/articles/categories" />
         <v-list-item prepend-icon="mdi-star-face" title="Reviews / Testimonials" to="/reviews" />
         <v-divider class="my-2" />
+        <v-list-subheader>CONTACTS & MESSAGES</v-list-subheader>
+        <v-list-item prepend-icon="mdi-email-outline" title="Inquiries" to="/contacts/inquiries" />
+        <v-list-item prepend-icon="mdi-office-building-cog" title="Contact Info Settings" to="/contacts/settings" />
+        <v-divider class="my-2" />
         <v-list-subheader>SYSTEM</v-list-subheader>
         <v-list-item prepend-icon="mdi-link-variant" title="Entity Relationships" to="/relations" />
         <v-list-item prepend-icon="mdi-cog" title="Settings" to="/settings" />
