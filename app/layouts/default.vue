@@ -10,7 +10,7 @@
         <v-list-subheader>CONTENT</v-list-subheader>
         <v-list-item prepend-icon="mdi-room-service" title="Services" to="/services" />
         <v-list-item prepend-icon="mdi-tag-multiple" title="Categories" to="/services/categories" />
-        <v-list-divider class="my-2" />
+        <v-divider class="my-2" />
         <v-list-subheader>SYSTEM</v-list-subheader>
         <v-list-item prepend-icon="mdi-link-variant" title="Entity Relationships" to="/relations" />
         <v-list-item prepend-icon="mdi-cog" title="Settings" to="/settings" />

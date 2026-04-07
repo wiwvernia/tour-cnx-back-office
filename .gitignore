@@ -22,3 +22,10 @@ logs
 .env
 .env.*
 !.env.example
+
+# LLM / Agent related
+.claude/
+.gemini/
+.agent/
+.agents/
+brain/

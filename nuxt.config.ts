@@ -17,6 +17,10 @@ export default defineNuxtConfig({
     transpile: ['vuetify'],
   },
 
+  components: [
+    { path: '~/components', pathPrefix: false }
+  ],
+
   modules: [
     '@nuxtjs/tailwindcss',
     (_options, nuxt) => {
