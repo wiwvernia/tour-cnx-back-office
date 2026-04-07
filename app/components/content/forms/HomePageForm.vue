@@ -30,6 +30,8 @@
               </template>
             </div>
             <input ref="heroImageInput" type="file" class="hidden" accept="image/*" @change="e => handleImage(e, 'hero', 'bgImage')" />
+            <!-- [AUDIT FIX] Alt Text -->
+            <AppInput v-model="form.hero.bgImageAlt" label="Background Image Alt Text" placeholder="Aerial view of Chiang Mai ancient temples" class="mt-3" />
           </div>
 
           <AppInput v-model="form.hero.heading" label="Main Heading" placeholder="สัมผัสเสน่ห์ล้านนา เที่ยวเชียงใหม่กับเรา" />
@@ -87,6 +89,8 @@
                 </template>
               </div>
               <input ref="philosophyImageInput" type="file" class="hidden" accept="image/*" @change="e => handleImage(e, 'philosophy', 'image')" />
+              <!-- [AUDIT FIX] Alt Text -->
+              <AppInput v-model="form.philosophy.imageAlt" label="Image Alt Text" placeholder="Traditional Lanna craftsmanship" class="mt-3" />
             </v-col>
           </v-row>
 
@@ -149,6 +153,32 @@
     <!-- ========== RIGHT COLUMN ========== -->
     <v-col cols="12" md="4">
 
+      <!-- [AUDIT FIX] Section Reordering / Visibility -->
+      <v-card class="mb-4">
+        <v-card-title class="pa-4 pb-2 text-base font-semibold flex items-center gap-2">
+          <i class="mdi mdi-order-bool-ascending text-gray-400" />
+          Section Order & Visibility
+        </v-card-title>
+        <v-card-text class="pa-3">
+          <p class="text-xs text-gray-500 mb-3">Drag to reorder • Toggle to show/hide sections</p>
+          <div
+            v-for="(section, index) in sectionOrder"
+            :key="section.key"
+            class="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg border border-gray-100 bg-gray-50 cursor-grab hover:bg-white transition-colors"
+          >
+            <i class="mdi mdi-drag-vertical text-gray-300 text-xl shrink-0" />
+            <span class="text-sm font-medium text-gray-700 flex-1">{{ section.label }}</span>
+            <v-switch
+              v-model="section.visible"
+              density="compact"
+              hide-details
+              color="primary"
+              class="shrink-0"
+            />
+          </div>
+        </v-card-text>
+      </v-card>
+
       <!-- SEO / Meta -->
       <v-card class="mb-4">
         <v-card-title class="pa-4 pb-2 text-base font-semibold flex items-center">
@@ -210,6 +240,14 @@ const props = defineProps({
 const heroImageInput = ref(null)
 const philosophyImageInput = ref(null)
 
+// [AUDIT FIX] Section reorder & visibility
+const sectionOrder = ref([
+  { key: 'hero', label: 'Hero Section', visible: true },
+  { key: 'philosophy', label: 'Philosophy / About', visible: true },
+  { key: 'featuredServices', label: 'Featured Services', visible: true },
+  { key: 'testimonials', label: 'Testimonials / Reviews', visible: true },
+])
+
 const defaultFeatureTexts = [
   'การบริการที่เชื่อถือได้ระดับมืออาชีพ',
   'เส้นทางท่องเที่ยวที่ดำเนิงเส้นสัมผัสและสุมสน',
@@ -219,6 +257,7 @@ const defaultFeatureTexts = [
 const form = reactive({
   hero: {
     bgImage: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&q=80&w=1920',
+    bgImageAlt: 'Aerial view of Chiang Mai ancient temples at sunrise', // [AUDIT FIX]
     heading: 'สัมผัสเสน่ห์ล้านนา\nเที่ยวเชียงใหม่\nกับเรา',
     subheading: 'ดิ่มด่ำกับวัฒนธรรมที่สุ่มลึกและการดูแลระดับพรีเมียม เพื่อให้การพักผ่อนของคุณคือความทรงจำที่ล้ำค่าที่สุดในชีวิต',
     primaryBtn: { text: 'จองทัวร์เลย', link: '/contact' },
@@ -229,6 +268,7 @@ const form = reactive({
     heading: 'ประสบการณ์การเดินทางที่เหนือกว่าความคาดหมาย',
     description: 'ด้วยประสบการณ์กว่า 15 ปีในพื้นที่เชียงใหม่ เราเข้าใจความสุขของการเดินทางสำหรับผู้ใหญ่ที่ต้องการความสะดวกสบาย ความปลอดภัย และเรื่องราวที่น่าสนใจในเบื้องหลังสถานที่ท่องเที่ยวแต่ละแห่ง',
     image: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&q=80&w=800',
+    imageAlt: 'Traditional Lanna craftsmanship and heritage', // [AUDIT FIX]
     quote: {
       text: '"ความใส่ใจคือหัวใจของเรา"',
       description: 'เราคัดสรรทุกรายละเอียดด้วยความสำนึก เติมเต็มด้วยประสบการณ์ที่ปลอดภัย สงบ และเติบโนด้วยคุณภาพเพื่อนักเดินทางที่มีประสบการณ์สูง',

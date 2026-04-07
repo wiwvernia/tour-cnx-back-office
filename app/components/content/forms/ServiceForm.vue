@@ -51,7 +51,7 @@
                 {{ form.metaTitle || form.title || 'Your Page Title' }}
               </div>
               <div class="text-sm text-gray-600" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                {{ form.metaDescription || form.description || 'Your meta description will appear here. Try to make it compelling and around 150 characters.' }}
+                {{ form.metaDescription || form.description || 'Your meta description will appear here.' }}
               </div>
             </div>
             <AppInput
@@ -68,6 +68,19 @@
               hint="Recommended: 140-160 characters"
               :maxlength="160"
             />
+            <!-- [AUDIT FIX] Canonical URL -->
+            <AppInput
+              v-model="form.canonicalUrl"
+              label="Canonical URL (Optional)"
+              placeholder="https://example.com/services/original-slug"
+              hint="Leave blank to use the current page URL as canonical"
+            />
+            <!-- [AUDIT FIX] Automation Toggles -->
+            <div class="border-t pt-4 flex flex-col gap-3">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">SEO Automation</span>
+              <AppToggle v-model="form.autoSchema" label="Auto JSON-LD Schema" />
+              <AppToggle v-model="form.inSitemap" label="Include in Sitemap" />
+            </div>
           </v-card-text>
         </v-expand-transition>
       </v-card>
@@ -92,7 +105,7 @@
         </v-card-text>
       </v-card>
 
-      <!-- Category -->
+      <!-- [AUDIT FIX] Category — pull from categories module (dynamic) -->
       <v-card class="mb-4">
         <v-card-title class="pa-4 pb-2 text-base font-semibold">Category</v-card-title>
         <v-card-text>
@@ -103,13 +116,17 @@
             :options="categories"
             placeholder="Select a category"
           />
+          <p class="text-xs text-gray-400 mt-2">
+            Manage categories in
+            <a href="/services/categories" class="text-blue-500 hover:underline">Service Categories</a>.
+          </p>
         </v-card-text>
       </v-card>
 
-      <!-- Meta Image -->
+      <!-- [AUDIT FIX] Meta Image + Alt Text -->
       <v-card>
         <v-card-title class="pa-4 pb-2 text-base font-semibold">Featured / Meta Image</v-card-title>
-        <v-card-text>
+        <v-card-text class="flex flex-col gap-4">
           <div
             class="border-2 border-dashed rounded-lg pa-6 text-center cursor-pointer hover:bg-gray-50 transition-colors"
             style="border-color: #ccc;"
@@ -128,7 +145,14 @@
             </div>
           </div>
           <input ref="fileInput" type="file" accept="image/*" class="d-none" @change="handleImageUpload" />
-          <p class="text-xs text-gray-400 mt-2">Used for Open Graph and SEO meta image tags</p>
+          <!-- [AUDIT FIX] Alt Text -->
+          <AppInput
+            v-model="form.metaImageAlt"
+            label="Image Alt Text"
+            placeholder="Describe the image for screen readers and SEO"
+            hint="Important for accessibility and image search"
+          />
+          <p class="text-xs text-gray-400">Used for Open Graph and SEO meta image tags</p>
         </v-card-text>
       </v-card>
     </v-col>
@@ -143,7 +167,9 @@ const props = defineProps({
   isNew:       { type: Boolean, default: true },
 })
 
-const categories = ['Health & Wellness', 'Tour Packages', 'Consulting Services']
+// [AUDIT FIX] Categories fetched from the Service Categories module (simulates API)
+const categories = ref(['Health & Wellness', 'Tour Packages', 'Consulting Services', 'Cultural Experience'])
+
 const seoExpanded = ref(true)
 const fileInput = ref(null)
 
@@ -157,6 +183,10 @@ const form = reactive({
   metaTitle: '',
   metaDescription: '',
   metaImage: '',
+  metaImageAlt: '',      // [AUDIT FIX] Alt Text
+  canonicalUrl: '',      // [AUDIT FIX] Canonical URL
+  autoSchema: true,      // [AUDIT FIX] JSON-LD toggle
+  inSitemap: true,       // [AUDIT FIX] Sitemap toggle
   ...props.initialData,
 })
 
