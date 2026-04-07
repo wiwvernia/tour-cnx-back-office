@@ -87,10 +87,9 @@
             label="Status"
             :options="['Draft', 'Published', 'Archived']"
           />
-          <AppInput
+          <AppDatePicker
             v-model="form.date"
             label="Publish Date"
-            type="date"
           />
           <AppToggle
             v-model="form.isFeatured"
