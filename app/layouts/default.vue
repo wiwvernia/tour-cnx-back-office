@@ -8,6 +8,8 @@
       <v-list nav>
         <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" to="/" />
         <v-list-subheader>CONTENT</v-list-subheader>
+        <v-list-item prepend-icon="mdi-home-edit-outline" title="Home Page" to="/content/home" />
+        <v-divider class="my-2" />
         <v-list-item prepend-icon="mdi-room-service" title="Services" to="/services" />
         <v-list-item prepend-icon="mdi-tag-multiple" title="Service Categories" to="/services/categories" />
         <v-divider class="my-2" />
@@ -20,6 +22,7 @@
         <v-list-item prepend-icon="mdi-office-building-cog" title="Contact Info Settings" to="/contacts/settings" />
         <v-divider class="my-2" />
         <v-list-subheader>SYSTEM</v-list-subheader>
+        <v-list-item prepend-icon="mdi-shield-account" title="Admin Accounts" to="/accounts" />
         <v-list-item prepend-icon="mdi-link-variant" title="Entity Relationships" to="/relations" />
         <v-list-item prepend-icon="mdi-cog" title="Settings" to="/settings" />
       </v-list>
