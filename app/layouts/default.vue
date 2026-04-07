@@ -9,7 +9,10 @@
         <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" to="/" />
         <v-list-subheader>CONTENT</v-list-subheader>
         <v-list-item prepend-icon="mdi-room-service" title="Services" to="/services" />
-        <v-list-item prepend-icon="mdi-tag-multiple" title="Categories" to="/services/categories" />
+        <v-list-item prepend-icon="mdi-tag-multiple" title="Service Categories" to="/services/categories" />
+        <v-divider class="my-2" />
+        <v-list-item prepend-icon="mdi-post" title="Articles" to="/articles" />
+        <v-list-item prepend-icon="mdi-tag-text" title="Article Categories" to="/articles/categories" />
         <v-divider class="my-2" />
         <v-list-subheader>SYSTEM</v-list-subheader>
         <v-list-item prepend-icon="mdi-link-variant" title="Entity Relationships" to="/relations" />

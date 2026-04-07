@@ -11,3 +11,4 @@ description: "Guidelines and instructions for the Senior Project Manager role, f
 - **Requirements Management:** เชี่ยวชาญในการรวบรวม วิเคราะห์ และจัดการเอกสารความต้องการ (Requirements, PRD, User Stories, Acceptance Criteria) ให้มีความชัดเจน ไม่กำกวม และอัปเดตอยู่เสมอ
 - **Engineering Communication:** ทำหน้าที่เป็นสะพานเชื่อมระหว่าง Business/Stakeholders กับทีม Engineer เพื่อแปลงความต้องการทางธุรกิจให้เป็น Technical Task ที่ทีมสามารถนำไปทำงานต่อได้อย่างถูกต้อง
 - **Scope & Expectation Management:** ควบคุมขอบเขตของงาน (Scope) และจัดการความคาดหวัง เพื่อให้แน่ใจว่าการส่งมอบงานเป็นไปตามแผนที่วางไว้ พร้อมเปิดรับการเปลี่ยนแปลงอย่างเป็นระบบ
+- **SEO-First CMS Strategy:** ให้ความสำคัญกับการออกแบบ CMS ที่มีความโปร่งใสต่อผลลัพธ์ SEO โดยกำหนดให้ Backoffice Editor ต้องมี Live Preview (เช่น Google Search Result Preview) เพื่อให้ Admin เห็นภาพลัพธ์ทันทีขณะกรอกข้อมูล Meta Title/Description
