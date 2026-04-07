@@ -164,17 +164,18 @@
           <div
             v-for="(section, index) in sectionOrder"
             :key="section.key"
-            class="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg border border-gray-100 bg-gray-50 cursor-grab hover:bg-white transition-colors"
+            draggable="true"
+            class="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg border transition-colors select-none"
+            :class="dragIndex === index
+              ? 'border-blue-400 bg-blue-50 opacity-70 cursor-grabbing'
+              : 'border-gray-100 bg-gray-50 hover:bg-white cursor-grab'"
+            @dragstart="onDragStart(index)"
+            @dragover.prevent="onDragOver(index)"
+            @dragend="onDragEnd"
           >
             <i class="mdi mdi-drag-vertical text-gray-300 text-xl shrink-0" />
             <span class="text-sm font-medium text-gray-700 flex-1">{{ section.label }}</span>
-            <v-switch
-              v-model="section.visible"
-              density="compact"
-              hide-details
-              color="primary"
-              class="shrink-0"
-            />
+            <AppToggle v-model="section.visible" />
           </div>
         </v-card-text>
       </v-card>
@@ -232,6 +233,26 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+
+// ─── Drag & Drop ──────────────────────────────────────────────────────────────
+const dragIndex = ref(null)
+
+function onDragStart(index) {
+  dragIndex.value = index
+}
+
+function onDragOver(index) {
+  if (dragIndex.value === null || dragIndex.value === index) return
+  const items = [...sectionOrder.value]
+  const [moved] = items.splice(dragIndex.value, 1)
+  items.splice(index, 0, moved)
+  sectionOrder.value = items
+  dragIndex.value = index
+}
+
+function onDragEnd() {
+  dragIndex.value = null
+}
 
 const props = defineProps({
   initialData: { type: Object, default: () => ({}) },

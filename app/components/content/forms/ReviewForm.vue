@@ -14,12 +14,22 @@
             rows="5"
           />
 
-          <AppInput
-            v-model="form.trip"
-            label="Trip / Service Reference *"
-            placeholder="e.g. ทริปเยือนเชียงใหม่ 3 วัน 2 คืน"
-            hint="This context helps readers understand what is being reviewed"
-          />
+          <!-- [AUDIT FIX] Gap 5: Relationship UX — proper entity linking inside form -->
+          <div>
+            <AppSelect
+              v-model="form.linkedServiceId"
+              label="Linked Service / Trip *"
+              :options="serviceOptions"
+              placeholder="Select a service this review is about…"
+              required
+            />
+            <p v-if="form.linkedServiceId" class="text-xs text-blue-500 mt-1">
+              Linked to: <strong>{{ serviceOptions.find(s => s.value === form.linkedServiceId)?.label }}</strong>
+            </p>
+            <p v-else class="text-xs text-gray-400 mt-1">
+              Linking helps display this review on the correct service page automatically.
+            </p>
+          </div>
         </v-card-text>
       </v-card>
 
@@ -77,8 +87,34 @@
       <!-- Visibility -->
       <v-card>
         <v-card-title class="pa-4 pb-2 text-base font-semibold">Visibility</v-card-title>
-        <v-card-text>
+        <v-card-text class="flex flex-col gap-4">
           <AppSelect v-model="form.status" label="Status" :options="['Draft', 'Published']" />
+        </v-card-text>
+      </v-card>
+
+      <!-- [AUDIT FIX] Gap 5: Related Articles cross-link -->
+      <v-card class="mt-4">
+        <v-card-title class="pa-4 pb-2 text-base font-semibold flex items-center gap-2">
+          <i class="mdi mdi-link-variant text-gray-400" />
+          Related Articles
+        </v-card-title>
+        <v-card-text class="flex flex-col gap-3">
+          <p class="text-xs text-gray-500">Link this review to related articles for cross-referencing.</p>
+          <div
+            v-for="article in articleOptions"
+            :key="article.value"
+            class="flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-100 bg-gray-50 cursor-pointer hover:bg-white transition-colors"
+            @click="toggleArticle(article.value)"
+          >
+            <i
+              :class="form.relatedArticles.includes(article.value) ? 'mdi mdi-checkbox-marked text-primary' : 'mdi mdi-checkbox-blank-outline text-gray-300'"
+              class="text-xl shrink-0"
+            />
+            <span class="text-sm text-gray-700">{{ article.label }}</span>
+          </div>
+          <p v-if="form.relatedArticles.length" class="text-xs text-green-600">
+            {{ form.relatedArticles.length }} article(s) linked
+          </p>
         </v-card-text>
       </v-card>
     </v-col>
@@ -101,13 +137,35 @@ const form = reactive({
   photo: '',
   rating: 5,
   content: '',
-  trip: '',
+  linkedServiceId: null,  // [AUDIT FIX] Replaces free-text trip
   isMonthly: false,
   status: 'Draft',
   date: new Date().toISOString().substr(0, 10),
   tripPhoto: '',
+  relatedArticles: [],   // [AUDIT FIX] Cross-link to articles
   ...props.initialData,
 })
+
+// [AUDIT FIX] Simulates data from Services module (API in production)
+const serviceOptions = ref([
+  { value: 'svc-001', label: 'ทริปเชียงใหม่ 3 วัน 2 คืน' },
+  { value: 'svc-002', label: 'โปรแกรม Detox & Wellness 5 วัน' },
+  { value: 'svc-003', label: 'Half-Day City Temple Tour' },
+  { value: 'svc-004', label: 'Lanna Heritage Full-Day Experience' },
+])
+
+// [AUDIT FIX] Simulates data from Articles module (API in production)
+const articleOptions = ref([
+  { value: 'art-001', label: 'สืบสานตำนานล้านนา: เรียนรู้วิถีชีวิตวัดเก่าแก่' },
+  { value: 'art-002', label: 'Chiang Mai Detox Guide 2024' },
+  { value: 'art-003', label: '5 Hidden Gems in Old City' },
+])
+
+function toggleArticle(id) {
+  const index = form.relatedArticles.indexOf(id)
+  if (index === -1) form.relatedArticles.push(id)
+  else form.relatedArticles.splice(index, 1)
+}
 
 function triggerAvatar() { avatarInput.value?.click() }
 function triggerTripPhoto() { tripPhotoInput.value?.click() }
