@@ -31,6 +31,7 @@
 - **Section Management:** หน้าบ้านต้องถูกออกแบบเป็น Components (เช่น Hero, Services, Articles, Testimonials) ที่สามารถเปิด-ปิด หรือสลับลำดับได้ผ่าน BOF
 - **Global Config:** สามารถเปลี่ยน Logo, Primary Color, Secondary Color และ Font ได้จากระบบหลังบ้าน
 - **Asset Control:** ทุกไฟล์รูปภาพต้องสามารถอัปโหลดใหม่และกำหนด Alt Text ได้ เพื่อประโยชน์ทาง SEO
+- **Content Specific Metadata:** แต่ละ Module จะมี Data Field พิเศษเสริม เช่น Review (Trip Photo, Review of the Month) และ Article (อัปโหลด Featured Image, เวลาอ่าน/Reading Time)
 
 ### 3.2 Dynamic Taxonomy & Relations (Backend & BOF)
 - **Custom Categories:** ผู้ใช้งานสามารถสร้างหมวดหมู่ (Categories) และป้ายกำกับ (Tags) ได้เองในทุก Module (เช่น Services, Articles, Reviews)
@@ -44,9 +45,14 @@
   - Custom URL Slug (เช่น `/health/detox-program`)
   - Meta Title & Meta Description (พร้อมระบบนับตัวอักษร)
   - Canonical Tags
+- **Global SEO Config:** ระบบรองรับการตั้งค่า Default Title Suffix, Meta Description และการฝัง Tracking Codes ต่างๆ (เช่น Google Analytics ID, Facebook Pixel ID) ควบคุมได้จากหลังบ้าน
 - **Automated Schema Markup:** ระบบต้องครอบคลุมการ Generate `JSON-LD` อัตโนมัติ (เช่น Article, Service, Review, FAQ Schema)
 - **Automated Sitemap:** ไฟล์ `sitemap.xml` ต้องถูกอัปเดตโดยอัตโนมัติเมื่อมีการเพิ่ม/ลบเนื้อหา
 - **Internal Linking:** ระบบ Text Editor ใน BOF ต้องอำนวยความสะดวกในการแทรก Internal Link
+
+### 3.4 Feature Flags & System Toggles
+- **Module Control:** มีระบบเปิด-ปิดการแสดงผลของแต่ละ Module (เช่น Blog, Review, Contact Form) ได้โดยตรงจากฝั่ง BOF
+- **Maintenance Mode:** รองรับการเปิด-ปิด Maintenance โหมด เมื่อระบบต้องการอัปเดตใหญ่
 
 ---
 
@@ -63,7 +69,7 @@
 - **Caching:** ใช้งานระบบ Cache เพื่อลดภาระของ Database และเพิ่มความเร็วในการ Render หน้าเว็บ
 
 ### 🛠️ Backoffice (React / Vue)
-- **Relationship UI:** หน้าจัดการความสัมพันธ์ต้องใช้งานง่าย (UX ดี) เช่น การให้เลือก Service จาก Dropdown/List เพื่อผูกกับ Review ได้ทันที
+- **Centralized Relationship Manager:** มีหน้าจัดการความสัมพันธ์ระหว่าง Entity รวมศูนย์ (เช่น Service ↔ Review, Article ↔ Service) แยกส่วนชัดเจน เพื่อง่ายต่อการบริหารความสัมพันธ์ข้าม Module ที่มีมากมาย
 - **SEO Preview:** สามารถแสดงตัวอย่างผลการค้นหาบน Google (Search Result Preview) แบบ Real-time ขณะที่ Admin กำลังกรอกข้อมูล
 
 ---

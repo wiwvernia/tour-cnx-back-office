@@ -60,3 +60,67 @@ description: "Guidelines and instructions for the Senior Full Stack Software Eng
 - ไม่มี `color="accent"` ใน Vuetify 4 — ใช้ `teal-darken-2` หรือสีอื่นแทน
 - `v-btn`, `v-card`, `v-dialog`, `v-table`, `v-chip`, `v-icon` ยังคงใช้งาน Vuetify ได้ตามปกติ
 - Script `<script setup>` ไม่รองรับ TypeScript `as` cast หากไม่มี `lang="ts"` — ใช้ `$event.target.value` ตรงๆ แทน
+- Force light theme โดยตั้ง `theme: { defaultTheme: 'light' }` ใน `app/plugins/vuetify.ts` เพื่อป้องกัน dark mode จาก system `prefers-color-scheme`
+
+### 6. Extended Common Components
+| Component | ใช้แทน | หมายเหตุ |
+|-----------|--------|---------|
+| `AppToggle` | `v-switch` | Tailwind peer + `after:` pseudo-element pattern — ห้ามใช้ nested div แยกสำหรับ thumb |
+| `AppTagInput` | `v-combobox` | Enter เพิ่ม tag, Backspace บน empty ลบ tag สุดท้าย |
+| `AppDatePicker` | `<input type="date">` | `v-menu` + `v-date-picker` แปลง YYYY-MM-DD ↔ Date, แสดงผล th-TH locale |
+| `AppStarRating` | `v-btn` loop | 5 ดาว clickable, yellow fill + hover scale |
+
+### 7. Extended Form Components
+| Form | Feature หลัก |
+|------|------------|
+| `ArticleForm` | date (AppDatePicker), isFeatured (AppToggle), tags (AppTagInput), readingTime, author, SEO |
+| `ReviewForm` | AppStarRating, linkedServiceId (AppSelect), relatedArticles (checkbox list), AppToggle isMonthly |
+| `HomePageForm` | Hero/Philosophy/FeaturedServices/Testimonials sections + Section Order drag-and-drop + SEO + Footer |
+| `AccountForm` | avatar upload, name, email, password — มี "Change password" toggle สำหรับ edit mode |
+
+### 8. Dialog & Re-mount Pattern
+- ใช้ `:key="formKey"` บน form component ใน dialog และ increment `formKey` ใน `openDialog()` เสมอ — เพื่อ force fresh reactive state เมื่อเปลี่ยน item
+- `defineExpose({ getData: () => ({ ...form }) })` ทุก form component — parent เรียก `formRef.value?.getData()` ตอน save
+
+### 9. Drag & Drop (Native HTML5)
+- ไม่ต้องติดตั้ง library เพิ่ม — ใช้ `draggable="true"` + `@dragstart` / `@dragover.prevent` / `@dragend`
+- Pattern สำหรับ reorder list:
+  ```js
+  function onDragOver(index) {
+    if (dragIndex.value === null || dragIndex.value === index) return
+    const items = [...list.value]
+    const [moved] = items.splice(dragIndex.value, 1)
+    items.splice(index, 0, moved)
+    list.value = items
+    dragIndex.value = index  // อัปเดต index ทันทีใน dragover
+  }
+  ```
+- Highlight item ที่กำลังลากด้วย `:class="dragIndex === index ? 'border-blue-400 bg-blue-50 opacity-70' : '...'"` และ `cursor-grabbing` vs `cursor-grab`
+
+### 10. Filter Row Alignment (Search + Select + Toggle)
+- ใช้ `items-end` บน flex container เพื่อ align ล่างสุด เมื่อมี elements ที่มี label ด้านบน
+- Toggle ที่อยู่ใน row เดียวกับ Select (มี label) ต้องเพิ่ม invisible spacer เพื่อ align:
+  ```html
+  <div class="flex flex-col justify-end">
+    <span class="block text-sm font-medium mb-1.5" style="visibility: hidden;">&nbsp;</span>
+    <AppToggle v-model="..." label="..." />
+  </div>
+  ```
+
+### 11. Singleton Settings Pages
+- หน้า Settings ที่เป็น singleton (Contact Settings, Global Settings) ไม่มี list — ใช้ `GET /settings/xxx` + `PUT /settings/xxx`
+- ใช้ `reactive()` + `Object.assign(form, JSON.parse(JSON.stringify(snapshot)))` สำหรับ Discard changes
+
+### 12. API Documentation Convention
+- เมื่อ feature frontend สมบูรณ์แล้ว ให้สร้าง `API_DOC.md` ที่ root ของ project ครอบคลุม:
+  - Database Schema (ทุก table พร้อม field types, constraints, FK)
+  - REST Endpoints พร้อม request/response examples จริง
+  - Error codes standard (`VALIDATION_ERROR`, `NOT_FOUND`, `CONFLICT` ฯลฯ)
+  - ERD summary
+- Naming convention: camelCase ใน JSON payload, snake_case ใน database
+
+### 13. Page Architecture Patterns
+- **Generic CMS page** (`content/[id].vue`) — detect `id === 'home'` เพื่อ render `HomePageForm` แทน generic editor
+- **Singleton resource pages** (settings, contact) — ไม่มี create/delete — มีแค่ save + discard
+- **Account management** — ต้องมี "cannot ban/delete self" guard: `v-if="row.id !== currentUserId"` บนปุ่ม ban/delete
+- **Entity Relationships page** — ใช้ tab pill filter แยก relation type พร้อม badge count, กัน duplicate ก่อน create link
