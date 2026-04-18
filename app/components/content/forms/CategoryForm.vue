@@ -4,7 +4,6 @@
       v-model="form.name"
       label="Category Name"
       placeholder="e.g. Health & Wellness"
-      @input="autoSlug"
     />
     <AppInputGroup
       v-model="form.slug"
@@ -16,7 +15,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 
 const props = defineProps({
   initialData: { type: Object, default: () => ({ id: null, name: '', slug: '' }) },
@@ -25,15 +24,15 @@ const props = defineProps({
 
 const form = reactive({ ...props.initialData })
 
-function autoSlug() {
+watch(() => form.name, (val) => {
   if (!props.isEditing) {
-    form.slug = form.name
+    form.slug = val
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .trim()
       .replace(/\s+/g, '-')
   }
-}
+})
 
 defineExpose({ getData: () => ({ ...form }) })
 </script>

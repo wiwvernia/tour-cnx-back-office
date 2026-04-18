@@ -11,18 +11,22 @@
       </AppBtn>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-12">
+      <i class="mdi mdi-loading mdi-spin text-4xl text-gray-300" />
+    </div>
+
     <!-- Categories Table -->
-    <AppTable :columns="columns" :rows="categories">
+    <AppTable v-else :columns="columns" :rows="categories">
       <template #slug="{ row }">
         <code class="text-sm bg-gray-100 px-2 py-0.5 rounded">/{{ row.slug }}</code>
       </template>
-      <template #count="{ row }">{{ row.count }} services</template>
       <template #actions="{ row }">
         <AppBtn variant="ghost" color="primary" size="sm" :icon="true" @click="openDialog(row)">
-          <i class="mdi mdi-pencil text-base" aria-hidden="true" />
+          <i class="mdi mdi-pencil text-base" />
         </AppBtn>
-        <AppBtn variant="ghost" color="danger" size="sm" :icon="true" @click="deleteCategory(row.id)">
-          <i class="mdi mdi-delete text-base" aria-hidden="true" />
+        <AppBtn variant="ghost" color="danger" size="sm" :icon="true" :disabled="saving" @click="deleteCategory(row)">
+          <i class="mdi mdi-delete text-base" />
         </AppBtn>
       </template>
     </AppTable>
@@ -37,8 +41,28 @@
           <CategoryForm :key="formKey" ref="categoryForm" :initial-data="editingData" :is-editing="isEditing" />
         </v-card-text>
         <v-card-actions class="pa-5 pt-0 gap-2 justify-end">
-          <AppBtn variant="ghost" color="secondary" @click="dialog = false">Cancel</AppBtn>
-          <AppBtn variant="solid" color="primary" @click="saveCategory">Save</AppBtn>
+          <AppBtn variant="ghost" color="secondary" :disabled="saving" @click="dialog = false">Cancel</AppBtn>
+          <AppBtn variant="solid" color="primary" :disabled="saving" @click="saveCategory">
+            <i v-if="saving" class="mdi mdi-loading mdi-spin mr-1" />Save
+          </AppBtn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Delete Confirm Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="400">
+      <v-card>
+        <v-card-text class="pa-6 text-center">
+          <i class="mdi mdi-delete-alert text-5xl text-red-400 mb-3 block" />
+          <h3 class="text-lg font-semibold mb-2">Delete this category?</h3>
+          <p class="text-sm text-gray-500 mb-1"><strong>{{ deleteTarget?.name }}</strong></p>
+          <p class="text-sm text-gray-400">This cannot be undone.</p>
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0 flex gap-2 justify-center">
+          <AppBtn variant="outline" color="secondary" :disabled="saving" @click="deleteDialog = false">Cancel</AppBtn>
+          <AppBtn color="danger" :disabled="saving" @click="confirmDelete">
+            <i v-if="saving" class="mdi mdi-loading mdi-spin mr-1" />Yes, Delete
+          </AppBtn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -46,26 +70,38 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+const { request } = useApi()
 
+const columns = [
+  { key: 'name',    label: 'Name' },
+  { key: 'slug',    label: 'Slug' },
+  { key: 'actions', label: 'Actions' },
+]
+
+const categories = ref([])
+const loading = ref(true)
+const saving = ref(false)
+
+async function fetchCategories() {
+  loading.value = true
+  try {
+    const res = await request('/service-categories', { params: { limit: 100 } })
+    categories.value = res.data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchCategories)
+
+// Dialog
 const dialog = ref(false)
 const isEditing = ref(false)
 const editingData = ref({ id: null, name: '', slug: '' })
 const categoryForm = ref(null)
 const formKey = ref(0)
-
-const columns = [
-  { key: 'name',    label: 'Name' },
-  { key: 'slug',    label: 'Slug' },
-  { key: 'count',   label: 'Services' },
-  { key: 'actions', label: 'Actions' },
-]
-
-const categories = ref([
-  { id: 1, name: 'Health & Wellness',    slug: 'health-wellness', count: 5 },
-  { id: 2, name: 'Tour Packages',        slug: 'tour-packages',   count: 8 },
-  { id: 3, name: 'Consulting Services',  slug: 'consulting',      count: 3 },
-])
 
 function openDialog(cat = null) {
   editingData.value = cat ? { ...cat } : { id: null, name: '', slug: '' }
@@ -74,19 +110,45 @@ function openDialog(cat = null) {
   dialog.value = true
 }
 
-function saveCategory() {
+async function saveCategory() {
   const data = categoryForm.value?.getData()
-  if (!data) return
-  if (isEditing.value) {
-    const idx = categories.value.findIndex(c => c.id === editingData.value.id)
-    if (idx !== -1) categories.value[idx] = { ...categories.value[idx], ...data }
-  } else {
-    categories.value.push({ ...data, id: Date.now(), count: 0 })
+  if (!data?.name) return
+  saving.value = true
+  try {
+    const body = { name: data.name, slug: data.slug || undefined }
+    if (isEditing.value) {
+      await request(`/service-categories/${editingData.value.id}`, { method: 'PUT', body })
+    } else {
+      await request('/service-categories', { method: 'POST', body })
+    }
+    dialog.value = false
+    await fetchCategories()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    saving.value = false
   }
-  dialog.value = false
 }
 
-function deleteCategory(id) {
-  categories.value = categories.value.filter(c => c.id !== id)
+// Delete
+const deleteDialog = ref(false)
+const deleteTarget = ref(null)
+
+function deleteCategory(cat) {
+  deleteTarget.value = cat
+  deleteDialog.value = true
+}
+
+async function confirmDelete() {
+  saving.value = true
+  try {
+    await request(`/service-categories/${deleteTarget.value.id}`, { method: 'DELETE' })
+    deleteDialog.value = false
+    await fetchCategories()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    saving.value = false
+  }
 }
 </script>
