@@ -1,7 +1,8 @@
 # TourCNX Backoffice — API Documentation & Database Schema
 
-> **Version:** 1.1.0
-> **Last Updated:** 2026-04-11
+> **Version:** 1.2.0
+> **Last Updated:** 2026-04-12
+> **Implementation Status:** Phase 1 complete (Auth, Users, Settings)
 > **Base URL:** `https://api.tourcnx.com/v1`
 > **Auth:** Bearer JWT (all endpoints require `Authorization: Bearer <token>` unless marked **Public**)
 
@@ -78,12 +79,14 @@
 
 ## Authentication
 
-JWT-based. Two-token flow.
+JWT-based. Two-token flow with **refresh token rotation** (every refresh issues a new refresh token and revokes the old one).
 
-| Token | Expiry | Storage |
-|---|---|---|
-| `accessToken` | 1 hour | Memory / short-lived |
-| `refreshToken` | 30 days | HttpOnly Cookie recommended |
+| Token | Type | Expiry | Storage |
+|---|---|---|---|
+| `accessToken` | JWT (HS256) | 1 hour | Memory / short-lived |
+| `refreshToken` | Opaque hex string (SHA-256 hashed in DB) | 30 days | HttpOnly Cookie recommended |
+
+> **Default admin:** `admin@tourcnx.com` / `Admin1234` — seeded by migration 000005. Change password immediately after first login.
 
 ---
 
@@ -328,7 +331,7 @@ JWT-based. Two-token flow.
 |---|---|
 | `slug` | Lowercase, alphanumeric + hyphens only (`[a-z0-9-]`), 3–255 chars, unique per entity type |
 | `email` | RFC 5322 format validation |
-| `password` | Min 8 chars, at least 1 uppercase, 1 number |
+| `password` | 8–72 chars, at least 1 uppercase, 1 number (bcrypt max is 72) |
 | HEX color | Must match `^#[0-9A-Fa-f]{6}$` |
 | `rating` | Integer 1–5 inclusive |
 | `readingTime` | Integer ≥ 1 |
@@ -422,13 +425,13 @@ Backend must return `422 UNPROCESSABLE` if trying to publish with missing requir
 #### `POST /auth/login` — *Public*
 ```json
 // Request
-{ "email": "admin@example.com", "password": "secret123" }
+{ "email": "admin@example.com", "password": "Admin1234" }
 
 // Response 200
 {
   "data": {
-    "accessToken": "eyJ...",
-    "refreshToken": "eyJ...",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "8437b77df355dd56b7b8a234a9f1e3a141ffc83f...",
     "expiresIn": 3600,
     "user": { "id": "uuid", "name": "Admin", "email": "admin@example.com", "role": "admin", "avatarUrl": null }
   }
@@ -441,12 +444,25 @@ Errors: `401` invalid credentials, `403` account banned
 #### `POST /auth/refresh` — *Public*
 ```json
 // Request
-{ "refreshToken": "eyJ..." }
-// Response 200 — new accessToken same shape as login
+{ "refreshToken": "8437b77df355dd56..." }
+
+// Response 200 — issues NEW accessToken + NEW refreshToken (old refreshToken is revoked)
+{
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "b91c33fa0d12...",
+    "expiresIn": 3600
+  }
+}
 ```
+Errors: `401` invalid/expired/revoked token, `403` account banned
 
 #### `POST /auth/logout`
-Invalidates refresh token server-side. Response `204`
+Revokes the refresh token server-side. Response `204`
+```json
+// Request
+{ "refreshToken": "8437b77df355dd56..." }
+```
 
 #### `GET /auth/me`
 Response `200` → `{ data: User }`
@@ -754,7 +770,11 @@ Singleton — one row, always exists.
 }
 ```
 
-#### `PUT /settings/contact` → `200` — request same shape as GET body
+#### `PUT /settings/contact` → `200`
+All fields are optional — only provided fields will be updated (partial update supported).
+```json
+// Response 200 → { data: ContactSettings } (full object)
+```
 
 ---
 
@@ -873,26 +893,45 @@ Singleton — one row, always exists.
 ```json
 {
   "data": {
-    "siteName": "Lanna Heritage Travel", "tagline": "สัมผัสเสน่ห์ล้านนา...",
-    "logoLightUrl": "https://...", "logoDarkUrl": "https://...", "faviconUrl": "https://...",
-    "colors": { "primary": "#7B1B1B", "accent": "#C8956C", "background": "#F5F0EB", "bodyText": "#2D2D2D" },
-    "fonts": { "heading": "Sarabun", "body": "Sarabun", "sizeBase": "16px" },
-    "seo": {
-      "titleSuffix": "| Lanna Heritage Travel", "defaultDescription": "...",
-      "googleAnalyticsId": "G-XXXXXXXXXX", "facebookPixelId": "",
-      "generateSitemap": true, "allowIndexing": true
-    },
-    "features": {
-      "showReviews": true, "showBlog": true,
-      "showContactForm": true, "showLineChat": true, "maintenanceMode": false
-    },
+    "siteName": "Lanna Heritage Travel",
+    "tagline": "สัมผัสเสน่ห์ล้านนา...",
+    "logoLightUrl": "https://...",
+    "logoDarkUrl": "https://...",
+    "faviconUrl": "https://...",
+    "colorPrimary": "#7B1B1B",
+    "colorAccent": "#C8956C",
+    "colorBackground": "#F5F0EB",
+    "colorBodyText": "#2D2D2D",
+    "fontHeading": "Sarabun",
+    "fontBody": "Sarabun",
+    "fontSizeBase": "16px",
+    "seoTitleSuffix": "| Lanna Heritage Travel",
+    "seoDefaultDescription": "...",
+    "googleAnalyticsId": "G-XXXXXXXXXX",
+    "facebookPixelId": "",
+    "generateSitemap": true,
+    "allowIndexing": true,
+    "featureShowReviews": true,
+    "featureShowBlog": true,
+    "featureShowContactForm": true,
+    "featureShowLineChat": false,
+    "featureMaintenanceMode": false,
     "updatedAt": "2024-04-07T10:00:00Z"
   }
 }
 ```
 
-#### `PUT /settings/global` → `200` — request same shape as GET body
-> When `maintenanceMode: true` is saved, frontend should begin showing maintenance page on next request.
+#### `PUT /settings/global` → `200`
+All fields are optional — only provided fields will be updated (partial update supported).
+```json
+// Request example (partial update)
+{
+  "siteName": "TourCNX",
+  "featureMaintenanceMode": true
+}
+// Response 200 → { data: GlobalSettings } (full object)
+```
+> When `featureMaintenanceMode: true` is saved, frontend should begin showing maintenance page on next request.
 
 ---
 

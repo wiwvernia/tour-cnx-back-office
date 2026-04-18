@@ -33,26 +33,31 @@
       </v-col>
     </v-row>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-12">
+      <i class="mdi mdi-loading mdi-spin text-4xl text-gray-300" />
+    </div>
+
     <!-- Table -->
-    <v-card shadow="sm">
+    <v-card v-else shadow="sm">
       <AppTable :columns="columns" :rows="accounts" row-key="id">
         <template #admin="{ row }">
           <div class="flex items-center gap-3 py-2">
             <v-avatar size="40" class="bg-gray-100 shrink-0">
-              <img v-if="row.avatar" :src="row.avatar" class="w-full h-full object-cover rounded-full" />
+              <img v-if="row.avatarUrl" :src="row.avatarUrl" class="w-full h-full object-cover rounded-full" />
               <span v-else class="text-sm font-bold text-gray-500">{{ initials(row.name) }}</span>
             </v-avatar>
             <div>
               <div class="font-medium text-gray-800 flex items-center gap-2">
                 {{ row.name }}
-                <span v-if="row.id === currentUserId" class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">You</span>
+                <span v-if="row.id === currentUser?.id" class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">You</span>
               </div>
               <div class="text-xs text-gray-400">{{ row.email }}</div>
             </div>
           </div>
         </template>
 
-        <template #role="{ row }">
+        <template #role>
           <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-purple-100 text-purple-700">
             Admin
           </span>
@@ -61,17 +66,17 @@
         <template #status="{ row }">
           <span
             class="inline-block px-2 py-0.5 text-xs font-semibold rounded"
-            :class="row.banned ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
-          >{{ row.banned ? 'Banned' : 'Active' }}</span>
+            :class="row.isBanned ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+          >{{ row.isBanned ? 'Banned' : 'Active' }}</span>
         </template>
 
         <template #created="{ row }">
-          <span class="text-xs text-gray-400">{{ row.created }}</span>
+          <span class="text-xs text-gray-400">{{ formatDate(row.createdAt) }}</span>
         </template>
 
         <template #lastActive="{ row }">
-          <span class="text-xs" :class="row.banned ? 'text-gray-300' : 'text-gray-500'">
-            {{ row.banned ? '—' : row.lastActive }}
+          <span class="text-xs" :class="row.isBanned ? 'text-gray-300' : 'text-gray-500'">
+            {{ row.isBanned ? '—' : formatRelative(row.lastActiveAt) }}
           </span>
         </template>
 
@@ -84,19 +89,19 @@
 
             <!-- Ban / Unban -->
             <AppBtn
-              v-if="row.id !== currentUserId"
+              v-if="row.id !== currentUser?.id"
               variant="ghost"
-              :color="row.banned ? 'primary' : 'danger'"
+              :color="row.isBanned ? 'primary' : 'danger'"
               size="sm"
               icon
               @click="confirmBan(row)"
             >
-              <i :class="row.banned ? 'mdi mdi-account-check' : 'mdi mdi-account-cancel'" />
+              <i :class="row.isBanned ? 'mdi mdi-account-check' : 'mdi mdi-account-cancel'" />
             </AppBtn>
 
             <!-- Delete -->
             <AppBtn
-              v-if="row.id !== currentUserId"
+              v-if="row.id !== currentUser?.id"
               variant="ghost"
               color="danger"
               size="sm"
@@ -120,11 +125,12 @@
           </AppBtn>
         </v-card-title>
         <v-card-text class="pa-4">
-          <AccountForm :key="formKey" ref="formRef" :initial-data="editingAccount || {}" :is-new="!editingAccount" />
+          <AccountForm :key="formKey" ref="formRef" :initial-data="editingAccount ? { ...editingAccount, avatar: editingAccount.avatarUrl } : {}" :is-new="!editingAccount" />
         </v-card-text>
         <v-card-actions class="pa-4 pt-0 flex gap-2 justify-end">
-          <AppBtn variant="outline" color="secondary" @click="dialog = false">Cancel</AppBtn>
-          <AppBtn color="primary" @click="saveAccount">
+          <AppBtn variant="outline" color="secondary" :disabled="saving" @click="dialog = false">Cancel</AppBtn>
+          <AppBtn color="primary" :disabled="saving" @click="saveAccount">
+            <i v-if="saving" class="mdi mdi-loading mdi-spin mr-1" />
             {{ editingAccount ? 'Save Changes' : 'Create Admin' }}
           </AppBtn>
         </v-card-actions>
@@ -137,15 +143,15 @@
         <v-card-text class="pa-6 text-center">
           <i
             class="mdi text-5xl mb-3 block"
-            :class="banTarget?.banned ? 'mdi-account-check text-green-500' : 'mdi-account-cancel text-red-500'"
+            :class="banTarget?.isBanned ? 'mdi-account-check text-green-500' : 'mdi-account-cancel text-red-500'"
           />
           <h3 class="text-lg font-semibold mb-2">
-            {{ banTarget?.banned ? 'Unban this admin?' : 'Ban this admin?' }}
+            {{ banTarget?.isBanned ? 'Unban this admin?' : 'Ban this admin?' }}
           </h3>
           <p class="text-sm text-gray-500 mb-1">
             <strong>{{ banTarget?.name }}</strong>
           </p>
-          <p v-if="!banTarget?.banned" class="text-sm text-gray-400">
+          <p v-if="!banTarget?.isBanned" class="text-sm text-gray-400">
             This admin will no longer be able to access the backoffice.
           </p>
           <p v-else class="text-sm text-gray-400">
@@ -153,9 +159,10 @@
           </p>
         </v-card-text>
         <v-card-actions class="pa-4 pt-0 flex gap-2 justify-center">
-          <AppBtn variant="outline" color="secondary" @click="banDialog = false">Cancel</AppBtn>
-          <AppBtn :color="banTarget?.banned ? 'primary' : 'danger'" @click="toggleBan">
-            {{ banTarget?.banned ? 'Yes, Unban' : 'Yes, Ban' }}
+          <AppBtn variant="outline" color="secondary" :disabled="saving" @click="banDialog = false">Cancel</AppBtn>
+          <AppBtn :color="banTarget?.isBanned ? 'primary' : 'danger'" :disabled="saving" @click="toggleBan">
+            <i v-if="saving" class="mdi mdi-loading mdi-spin mr-1" />
+            {{ banTarget?.isBanned ? 'Yes, Unban' : 'Yes, Ban' }}
           </AppBtn>
         </v-card-actions>
       </v-card>
@@ -175,8 +182,11 @@
           </p>
         </v-card-text>
         <v-card-actions class="pa-4 pt-0 flex gap-2 justify-center">
-          <AppBtn variant="outline" color="secondary" @click="deleteDialog = false">Cancel</AppBtn>
-          <AppBtn color="danger" @click="doDelete">Yes, Delete</AppBtn>
+          <AppBtn variant="outline" color="secondary" :disabled="saving" @click="deleteDialog = false">Cancel</AppBtn>
+          <AppBtn color="danger" :disabled="saving" @click="doDelete">
+            <i v-if="saving" class="mdi mdi-loading mdi-spin mr-1" />
+            Yes, Delete
+          </AppBtn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -184,9 +194,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-
-const currentUserId = 1
+const { currentUser } = useAuth()
+const { request } = useApi()
 
 const columns = [
   { key: 'admin', label: 'Admin', class: 'w-1/3' },
@@ -197,42 +206,48 @@ const columns = [
   { key: 'actions', label: 'Actions' },
 ]
 
-const accounts = ref([
-  {
-    id: 1,
-    name: 'Patcharapon Admin',
-    email: 'admin@lannaheritage.com',
-    avatar: 'https://i.pravatar.cc/150?u=admin1',
-    banned: false,
-    created: '2024-01-15',
-    lastActive: '2 hours ago',
-  },
-  {
-    id: 2,
-    name: 'Sirinapa Editor',
-    email: 'sirinapa@lannaheritage.com',
-    avatar: 'https://i.pravatar.cc/150?u=admin2',
-    banned: false,
-    created: '2024-02-20',
-    lastActive: '1 day ago',
-  },
-  {
-    id: 3,
-    name: 'Old Staff',
-    email: 'oldstaff@lannaheritage.com',
-    avatar: '',
-    banned: true,
-    created: '2023-08-01',
-    lastActive: '3 months ago',
-  },
-])
+const accounts = ref([])
+const loading = ref(true)
+const saving = ref(false)
 
-const activeCount = computed(() => accounts.value.filter(a => !a.banned).length)
-const bannedCount = computed(() => accounts.value.filter(a => a.banned).length)
+const activeCount = computed(() => accounts.value.filter(a => !a.isBanned).length)
+const bannedCount = computed(() => accounts.value.filter(a => a.isBanned).length)
 
 function initials(name) {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  return name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?'
 }
+
+function formatDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-CA')
+}
+
+function formatRelative(iso) {
+  if (!iso) return '—'
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  if (hours < 24) return `${hours}h ago`
+  if (days < 30) return `${days}d ago`
+  return new Date(iso).toLocaleDateString('en-CA')
+}
+
+async function fetchAccounts() {
+  loading.value = true
+  try {
+    const res = await request('/users', { params: { limit: 100 } })
+    accounts.value = res.data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchAccounts)
 
 // Dialog
 const dialog = ref(false)
@@ -246,27 +261,42 @@ function openDialog(account = null) {
   dialog.value = true
 }
 
-function saveAccount() {
+async function saveAccount() {
   const data = formRef.value?.getData()
   if (!data?.name || !data?.email) return
 
-  if (editingAccount.value) {
-    const idx = accounts.value.findIndex(a => a.id === editingAccount.value.id)
-    if (idx !== -1) {
-      accounts.value[idx] = { ...accounts.value[idx], name: data.name, email: data.email, avatar: data.avatar || accounts.value[idx].avatar }
+  saving.value = true
+  try {
+    const avatarUrl = data.avatar && !data.avatar.startsWith('data:') ? data.avatar : undefined
+
+    if (editingAccount.value) {
+      // Update user
+      const body = { name: data.name, email: data.email }
+      if (avatarUrl !== undefined) body.avatarUrl = avatarUrl
+      await request(`/users/${editingAccount.value.id}`, { method: 'PUT', body })
+
+      // Change password if provided
+      if (data.password) {
+        await request(`/users/${editingAccount.value.id}/change-password`, {
+          method: 'POST',
+          body: { newPassword: data.password },
+        })
+      }
+    } else {
+      if (!data.password) { saving.value = false; return }
+      await request('/users', {
+        method: 'POST',
+        body: { name: data.name, email: data.email, password: data.password, avatarUrl },
+      })
     }
-  } else {
-    accounts.value.push({
-      id: Date.now(),
-      name: data.name,
-      email: data.email,
-      avatar: data.avatar || '',
-      banned: false,
-      created: new Date().toISOString().substr(0, 10),
-      lastActive: 'Just now',
-    })
+
+    dialog.value = false
+    await fetchAccounts()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    saving.value = false
   }
-  dialog.value = false
 }
 
 // Ban
@@ -278,10 +308,18 @@ function confirmBan(account) {
   banDialog.value = true
 }
 
-function toggleBan() {
-  const idx = accounts.value.findIndex(a => a.id === banTarget.value.id)
-  if (idx !== -1) accounts.value[idx].banned = !accounts.value[idx].banned
-  banDialog.value = false
+async function toggleBan() {
+  saving.value = true
+  try {
+    const endpoint = banTarget.value.isBanned ? 'unban' : 'ban'
+    await request(`/users/${banTarget.value.id}/${endpoint}`, { method: 'PATCH' })
+    banDialog.value = false
+    await fetchAccounts()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    saving.value = false
+  }
 }
 
 // Delete
@@ -293,8 +331,16 @@ function confirmDelete(account) {
   deleteDialog.value = true
 }
 
-function doDelete() {
-  accounts.value = accounts.value.filter(a => a.id !== deleteTarget.value.id)
-  deleteDialog.value = false
+async function doDelete() {
+  saving.value = true
+  try {
+    await request(`/users/${deleteTarget.value.id}`, { method: 'DELETE' })
+    deleteDialog.value = false
+    await fetchAccounts()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    saving.value = false
+  }
 }
 </script>

@@ -7,14 +7,20 @@
         <p class="text-sm text-gray-500 mt-1">Brand identity, theme colors, typography & SEO defaults</p>
       </div>
       <div class="flex gap-2">
-        <AppBtn variant="outline" color="secondary" @click="resetChanges">Discard</AppBtn>
-        <AppBtn color="primary" @click="save">
-          <i class="mdi mdi-check mr-1" />Save Settings
+        <AppBtn variant="outline" color="secondary" :disabled="saving" @click="resetChanges">Discard</AppBtn>
+        <AppBtn color="primary" :disabled="saving" @click="save">
+          <i v-if="saving" class="mdi mdi-loading mdi-spin mr-1" />
+          <i v-else class="mdi mdi-check mr-1" />Save Settings
         </AppBtn>
       </div>
     </div>
 
-    <v-row>
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-12">
+      <i class="mdi mdi-loading mdi-spin text-4xl text-gray-300" />
+    </div>
+
+    <v-row v-else>
       <!-- ===== LEFT COLUMN ===== -->
       <v-col cols="12" md="8">
 
@@ -133,16 +139,8 @@
             <i class="mdi mdi-format-font text-gray-400" />Typography
           </v-card-title>
           <v-card-text class="flex flex-col gap-4">
-            <AppSelect
-              v-model="form.fonts.heading"
-              label="Heading Font"
-              :options="fontOptions"
-            />
-            <AppSelect
-              v-model="form.fonts.body"
-              label="Body Font"
-              :options="fontOptions"
-            />
+            <AppSelect v-model="form.fonts.heading" label="Heading Font" :options="fontOptions" />
+            <AppSelect v-model="form.fonts.body" label="Body Font" :options="fontOptions" />
 
             <!-- Font Preview -->
             <div class="border rounded-lg p-4 bg-gray-50">
@@ -155,11 +153,7 @@
               </div>
             </div>
 
-            <AppSelect
-              v-model="form.fonts.size"
-              label="Base Font Size"
-              :options="['14px', '15px', '16px', '17px', '18px']"
-            />
+            <AppSelect v-model="form.fonts.size" label="Base Font Size" :options="['14px', '15px', '16px', '17px', '18px']" />
           </v-card-text>
         </v-card>
       </v-col>
@@ -226,21 +220,17 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+const { request } = useApi()
 
 const logoLightInput = ref(null)
 const logoDarkInput = ref(null)
 const faviconInput = ref(null)
+const loading = ref(true)
+const saving = ref(false)
 
 const fontOptions = [
-  'Sarabun',
-  'Noto Sans Thai',
-  'Prompt',
-  'Kanit',
-  'Mitr',
-  'Inter',
-  'Playfair Display',
-  'Cormorant Garamond',
+  'Sarabun', 'Noto Sans Thai', 'Prompt', 'Kanit', 'Mitr',
+  'Inter', 'Playfair Display', 'Cormorant Garamond',
 ]
 
 const colorKeys = [
@@ -254,22 +244,13 @@ const form = reactive({
   logoLight: '',
   logoDark: '',
   favicon: '',
-  siteName: 'Lanna Heritage Travel',
-  tagline: 'สัมผัสเสน่ห์ล้านนา เที่ยวเชียงใหม่กับเรา',
-  colors: {
-    primary: '#7B1B1B',
-    accent: '#C8956C',
-    background: '#F5F0EB',
-    bodyText: '#2D2D2D',
-  },
-  fonts: {
-    heading: 'Sarabun',
-    body: 'Sarabun',
-    size: '16px',
-  },
+  siteName: '',
+  tagline: '',
+  colors: { primary: '#7B1B1B', accent: '#C8956C', background: '#F5F0EB', bodyText: '#2D2D2D' },
+  fonts: { heading: 'Sarabun', body: 'Sarabun', size: '16px' },
   seo: {
-    titleSuffix: '| Lanna Heritage Travel',
-    defaultDescription: 'สัมผัสเสน่ห์ล้านนาและประสบการณ์การท่องเที่ยวระดับพรีเมียมในเชียงใหม่ กับ Lanna Heritage Travel',
+    titleSuffix: '',
+    defaultDescription: '',
     googleAnalyticsId: '',
     facebookPixelId: '',
     generateSitemap: true,
@@ -284,6 +265,49 @@ const form = reactive({
   },
 })
 
+function applyApiData(data) {
+  form.logoLight = data.logoLightUrl || ''
+  form.logoDark = data.logoDarkUrl || ''
+  form.favicon = data.faviconUrl || ''
+  form.siteName = data.siteName || ''
+  form.tagline = data.tagline || ''
+  form.colors.primary = data.colorPrimary || '#7B1B1B'
+  form.colors.accent = data.colorAccent || '#C8956C'
+  form.colors.background = data.colorBackground || '#F5F0EB'
+  form.colors.bodyText = data.colorBodyText || '#2D2D2D'
+  form.fonts.heading = data.fontHeading || 'Sarabun'
+  form.fonts.body = data.fontBody || 'Sarabun'
+  form.fonts.size = data.fontSizeBase || '16px'
+  form.seo.titleSuffix = data.seoTitleSuffix || ''
+  form.seo.defaultDescription = data.seoDefaultDescription || ''
+  form.seo.googleAnalyticsId = data.googleAnalyticsId || ''
+  form.seo.facebookPixelId = data.facebookPixelId || ''
+  form.seo.generateSitemap = data.generateSitemap ?? true
+  form.seo.allowIndexing = data.allowIndexing ?? true
+  form.features.showReviews = data.featureShowReviews ?? true
+  form.features.showBlog = data.featureShowBlog ?? true
+  form.features.showContactForm = data.featureShowContactForm ?? true
+  form.features.showLineChat = data.featureShowLineChat ?? true
+  form.features.maintenanceMode = data.featureMaintenanceMode ?? false
+}
+
+let savedSnapshot = {}
+
+async function fetchSettings() {
+  loading.value = true
+  try {
+    const res = await request('/settings/global')
+    applyApiData(res.data)
+    savedSnapshot = JSON.parse(JSON.stringify(form))
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchSettings)
+
 function handleImage(e, field) {
   const file = e.target.files[0]
   if (!file) return
@@ -292,13 +316,45 @@ function handleImage(e, field) {
   reader.readAsDataURL(file)
 }
 
-const savedSnapshot = JSON.parse(JSON.stringify(form))
-
 function resetChanges() {
   Object.assign(form, JSON.parse(JSON.stringify(savedSnapshot)))
 }
 
-function save() {
-  console.log('Save settings:', JSON.parse(JSON.stringify(form)))
+async function save() {
+  saving.value = true
+  try {
+    const body = {
+      siteName: form.siteName,
+      tagline: form.tagline,
+      logoLightUrl: form.logoLight && !form.logoLight.startsWith('data:') ? form.logoLight : undefined,
+      logoDarkUrl: form.logoDark && !form.logoDark.startsWith('data:') ? form.logoDark : undefined,
+      faviconUrl: form.favicon && !form.favicon.startsWith('data:') ? form.favicon : undefined,
+      colorPrimary: form.colors.primary,
+      colorAccent: form.colors.accent,
+      colorBackground: form.colors.background,
+      colorBodyText: form.colors.bodyText,
+      fontHeading: form.fonts.heading,
+      fontBody: form.fonts.body,
+      fontSizeBase: form.fonts.size,
+      seoTitleSuffix: form.seo.titleSuffix,
+      seoDefaultDescription: form.seo.defaultDescription,
+      googleAnalyticsId: form.seo.googleAnalyticsId,
+      facebookPixelId: form.seo.facebookPixelId,
+      generateSitemap: form.seo.generateSitemap,
+      allowIndexing: form.seo.allowIndexing,
+      featureShowReviews: form.features.showReviews,
+      featureShowBlog: form.features.showBlog,
+      featureShowContactForm: form.features.showContactForm,
+      featureShowLineChat: form.features.showLineChat,
+      featureMaintenanceMode: form.features.maintenanceMode,
+    }
+    const res = await request('/settings/global', { method: 'PUT', body })
+    applyApiData(res.data)
+    savedSnapshot = JSON.parse(JSON.stringify(form))
+  } catch (e) {
+    console.error(e)
+  } finally {
+    saving.value = false
+  }
 }
 </script>

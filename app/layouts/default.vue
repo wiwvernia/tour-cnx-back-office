@@ -31,6 +31,21 @@
     <v-app-bar elevation="1">
       <v-app-bar-nav-icon @click="drawer = !drawer" />
       <v-app-bar-title>Admin Panel</v-app-bar-title>
+      <template #append>
+        <div v-if="currentUser" class="flex items-center gap-2 mr-3">
+          <div class="text-right hidden sm:block">
+            <div class="text-sm font-medium text-gray-700 leading-tight">{{ currentUser.name }}</div>
+            <div class="text-xs text-gray-400">{{ currentUser.email }}</div>
+          </div>
+          <v-avatar size="34" class="bg-gray-100 shrink-0">
+            <img v-if="currentUser.avatarUrl" :src="currentUser.avatarUrl" class="w-full h-full object-cover" />
+            <span v-else class="text-xs font-bold text-gray-500">{{ initials(currentUser.name) }}</span>
+          </v-avatar>
+          <v-btn variant="text" icon size="small" :ripple="false" @click="handleLogout">
+            <i class="mdi mdi-logout text-gray-500" />
+          </v-btn>
+        </div>
+      </template>
     </v-app-bar>
 
     <v-main class="bg-gray-50 h-screen overflow-y-auto">
@@ -42,6 +57,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 const drawer = ref(true)
+const { currentUser, logout } = useAuth()
+
+function initials(name) {
+  return name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?'
+}
+
+async function handleLogout() {
+  await logout()
+}
 </script>
