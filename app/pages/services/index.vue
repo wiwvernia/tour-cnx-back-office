@@ -30,46 +30,75 @@
             class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
           />
         </div>
-        <AppSelect v-model="filterCategory" :options="categoryItems" placeholder="All Categories" class="min-w-40" />
-        <AppSelect v-model="filterStatus" :options="statusItems" class="min-w-36" />
+        <AppSelect v-model="filterCategoryId" :options="categoryOptions" placeholder="All Categories" class="min-w-40" />
+        <AppSelect v-model="filterStatus" :options="statusOptions" class="min-w-36" />
       </div>
     </v-card>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-12">
+      <i class="mdi mdi-loading mdi-spin text-4xl text-gray-300" />
+    </div>
+
     <!-- Services Table -->
-    <AppTable :columns="columns" :rows="filteredServices">
+    <AppTable v-else :columns="columns" :rows="filteredServices">
       <template #title="{ row }">
         <div class="font-medium">{{ row.title }}</div>
         <div class="text-xs text-gray-400">/{{ row.slug }}</div>
       </template>
       <template #category="{ row }">
-        <v-chip size="small" variant="tonal">{{ row.category }}</v-chip>
+        <v-chip v-if="row.categoryName" size="small" variant="tonal">{{ row.categoryName }}</v-chip>
+        <span v-else class="text-gray-300 text-xs">—</span>
       </template>
       <template #status="{ row }">
-        <v-chip size="small" :color="row.status === 'Published' ? 'success' : 'warning'">
-          {{ row.status }}
+        <v-chip size="small" :color="row.status === 'published' ? 'success' : row.status === 'archived' ? 'error' : 'warning'">
+          {{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}
         </v-chip>
       </template>
       <template #updatedAt="{ row }">
-        <span class="text-sm text-gray-500">{{ row.updatedAt }}</span>
+        <span class="text-sm text-gray-500">{{ formatDate(row.updatedAt) }}</span>
       </template>
       <template #actions="{ row }">
         <AppBtn variant="ghost" color="primary" size="sm" :to="'/services/' + row.id">Edit</AppBtn>
-        <AppBtn variant="ghost" color="danger" size="sm" @click="deleteService(row.id)">Delete</AppBtn>
+        <AppBtn variant="ghost" color="danger" size="sm" @click="confirmDelete(row)">Delete</AppBtn>
       </template>
       <template #empty>No services found</template>
     </AppTable>
+
+    <!-- Delete Confirm Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="400">
+      <v-card>
+        <v-card-text class="pa-6 text-center">
+          <i class="mdi mdi-delete-alert text-5xl text-red-400 mb-3 block" />
+          <h3 class="text-lg font-semibold mb-2">Delete this service?</h3>
+          <p class="text-sm text-gray-500 mb-1"><strong>{{ deleteTarget?.title }}</strong></p>
+          <p class="text-sm text-gray-400">This action cannot be undone.</p>
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0 flex gap-2 justify-center">
+          <AppBtn variant="outline" color="secondary" :disabled="saving" @click="deleteDialog = false">Cancel</AppBtn>
+          <AppBtn color="danger" :disabled="saving" @click="doDelete">
+            <i v-if="saving" class="mdi mdi-loading mdi-spin mr-1" />Yes, Delete
+          </AppBtn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+const { request } = useApi()
 
 const search = ref('')
-const filterCategory = ref(null)
-const filterStatus = ref('All')
+const filterCategoryId = ref(null)
+const filterStatus = ref(null)
 
-const categoryItems = ['Health & Wellness', 'Tour Packages', 'Consulting Services']
-const statusItems = ['All', 'Published', 'Draft']
+const statusOptions = [
+  { label: 'All Statuses', value: null },
+  { label: 'Published', value: 'published' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'Archived', value: 'archived' },
+]
+const categoryOptions = ref([{ label: 'All Categories', value: null }])
 
 const columns = [
   { key: 'title',     label: 'Title' },
@@ -79,22 +108,72 @@ const columns = [
   { key: 'actions',   label: 'Actions' },
 ]
 
-const services = ref([
-  { id: 1, title: 'Detox Program',          slug: 'detox-program',          category: 'Health & Wellness',    status: 'Published', updatedAt: '2026-04-01' },
-  { id: 2, title: 'Chiang Mai City Tour',   slug: 'chiang-mai-city-tour',   category: 'Tour Packages',        status: 'Published', updatedAt: '2026-03-28' },
-  { id: 3, title: 'Business Consulting',    slug: 'business-consulting',    category: 'Consulting Services',  status: 'Draft',     updatedAt: '2026-03-25' },
-])
+const services = ref([])
+const loading = ref(true)
+const saving = ref(false)
+
+function formatDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-CA')
+}
 
 const filteredServices = computed(() =>
   services.value.filter(s => {
     const matchSearch = !search.value || s.title.toLowerCase().includes(search.value.toLowerCase())
-    const matchCat    = !filterCategory.value || s.category === filterCategory.value
-    const matchStatus = filterStatus.value === 'All' || s.status === filterStatus.value
+    const matchCat    = !filterCategoryId.value || s.categoryId === filterCategoryId.value
+    const matchStatus = !filterStatus.value || s.status === filterStatus.value
     return matchSearch && matchCat && matchStatus
   })
 )
 
-function deleteService(id) {
-  services.value = services.value.filter(s => s.id !== id)
+async function fetchServices() {
+  loading.value = true
+  try {
+    const res = await request('/services', { params: { limit: 100 } })
+    services.value = res.data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function fetchCategories() {
+  try {
+    const res = await request('/service-categories', { params: { limit: 100 } })
+    categoryOptions.value = [
+      { label: 'All Categories', value: null },
+      ...res.data.map(c => ({ label: c.name, value: c.id })),
+    ]
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+onMounted(() => {
+  fetchServices()
+  fetchCategories()
+})
+
+// Delete
+const deleteDialog = ref(false)
+const deleteTarget = ref(null)
+
+function confirmDelete(row) {
+  deleteTarget.value = row
+  deleteDialog.value = true
+}
+
+async function doDelete() {
+  saving.value = true
+  try {
+    await request(`/services/${deleteTarget.value.id}`, { method: 'DELETE' })
+    deleteDialog.value = false
+    await fetchServices()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    saving.value = false
+  }
 }
 </script>
