@@ -12,15 +12,21 @@
         </div>
       </div>
       <div class="flex gap-2">
-        <AppBtn variant="outline" color="secondary" to="/content">Discard</AppBtn>
-        <AppBtn color="primary" @click="save">
-          <i class="mdi mdi-check mr-1" />Save Changes
+        <AppBtn variant="outline" color="secondary" :disabled="saving" to="/content">Discard</AppBtn>
+        <AppBtn color="primary" :disabled="saving" @click="save">
+          <i v-if="saving" class="mdi mdi-loading mdi-spin mr-1" />
+          <i v-else class="mdi mdi-check mr-1" />Save Changes
         </AppBtn>
       </div>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-12">
+      <i class="mdi mdi-loading mdi-spin text-4xl text-gray-300" />
+    </div>
+
     <!-- Home Page — full form -->
-    <HomePageForm v-if="isHomePage" ref="formRef" />
+    <HomePageForm v-else-if="isHomePage" ref="formRef" :initial-data="pageData" />
 
     <!-- Generic pages -->
     <v-row v-else>
@@ -47,18 +53,6 @@
                 <i class="mdi mdi-pencil" />
               </AppBtn>
             </div>
-            <AppBtn variant="outline" color="secondary" class="w-full">
-              <i class="mdi mdi-plus mr-1" />Add New Section
-            </AppBtn>
-          </v-card-text>
-        </v-card>
-
-        <v-card>
-          <v-card-title class="pa-4 pb-2 text-base font-semibold">Entity Relationships</v-card-title>
-          <v-card-text class="flex flex-col gap-4">
-            <p class="text-sm text-gray-500">Link this page to other taxonomies and related content.</p>
-            <AppTagInput v-model="relatedReviews" label="Related Reviews" placeholder="Add review…" />
-            <AppTagInput v-model="tags" label="Tags" placeholder="Add tag…" />
           </v-card-text>
         </v-card>
       </v-col>
@@ -68,14 +62,15 @@
         <v-card class="mb-4">
           <v-card-title class="pa-4 pb-2 text-base font-semibold flex items-center">
             SEO Control Panel
-            <span class="ml-auto inline-block px-2 py-0.5 text-xs font-semibold rounded bg-green-100 text-green-700">Excellent</span>
           </v-card-title>
           <v-card-text class="flex flex-col gap-4">
+            <!-- Google Preview -->
             <div class="bg-white border rounded p-3 shadow-sm" style="font-family: Arial, sans-serif;">
               <div class="text-xs text-blue-800 mb-1">https://example.com/{{ slug }}</div>
-              <div class="text-sm text-blue-600 font-medium mb-1 leading-tight">{{ title }}</div>
+              <div class="text-sm text-blue-600 font-medium mb-1 leading-tight">{{ metaTitle || title }}</div>
               <div class="text-xs text-gray-500 line-clamp-2">{{ metaDescription }}</div>
             </div>
+            <AppInput v-model="metaTitle" label="Meta Title" :counter="60" hint="Recommended: 50-60 characters" />
             <AppInputGroup v-model="slug" label="URL Slug" prefix="/" />
             <AppTextarea v-model="metaDescription" label="Meta Description" rows="3" hint="Recommended 150-160 characters" :counter="160" />
             <div class="border-t pt-4 flex flex-col gap-3">
@@ -90,12 +85,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const { request } = useApi()
+
 const id = route.params.id
 const formRef = ref(null)
+const loading = ref(true)
+const saving = ref(false)
+const pageData = ref({})
 
 const isHomePage = computed(() => id === 'home')
 
@@ -110,21 +109,75 @@ const pageSubtitle = computed(() => {
 })
 
 // Generic page state
-const title = ref('Home Page')
+const title = ref('')
 const slug = ref(id)
-const metaDescription = ref('This is a dynamically generated description for the page.')
+const metaTitle = ref('')
+const metaDescription = ref('')
 const autoSchema = ref(true)
 const inSitemap = ref(true)
-const relatedReviews = ref([])
-const tags = ref(['Health', 'Tour'])
-const sections = ref(['Hero Section', 'Services List'])
+const sections = ref([])
 
-function save() {
-  if (isHomePage.value) {
-    const data = formRef.value?.getData()
-    console.log('Save home page:', data)
-  } else {
-    console.log('Save generic page:', { title: title.value, slug: slug.value })
+function applyPageData(data) {
+  pageData.value = data
+  if (!isHomePage.value) {
+    title.value = data.title || ''
+    slug.value = data.slug || id
+    metaTitle.value = data.metaTitle || ''
+    metaDescription.value = data.metaDescription || ''
+    autoSchema.value = data.autoSchema ?? true
+    inSitemap.value = data.inSitemap ?? true
+    sections.value = data.contentJson?.sectionOrder?.map(s => s.label) || []
+  }
+}
+
+async function fetchPage() {
+  loading.value = true
+  try {
+    const res = await request(`/pages/${id}`)
+    applyPageData(res.data)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchPage)
+
+async function save() {
+  saving.value = true
+  try {
+    let body = {}
+    if (isHomePage.value) {
+      const formData = formRef.value?.getData()
+      body = {
+        title: formData?.seo?.title,
+        metaTitle: formData?.seo?.title,
+        metaDescription: formData?.seo?.description,
+        autoSchema: formData?.seo?.autoSchema,
+        inSitemap: formData?.seo?.inSitemap,
+        contentJson: {
+          hero: { ...formData?.hero, bgImageUrl: formData?.hero?.bgImage },
+          philosophy: { ...formData?.philosophy, imageUrl: formData?.philosophy?.image },
+          featuredServices: formData?.featuredServices,
+          testimonials: formData?.testimonials,
+          footer: formData?.footer,
+        },
+      }
+    } else {
+      body = {
+        title: title.value,
+        metaTitle: metaTitle.value,
+        metaDescription: metaDescription.value,
+        autoSchema: autoSchema.value,
+        inSitemap: inSitemap.value,
+      }
+    }
+    await request(`/pages/${id}`, { method: 'PUT', body })
+  } catch (e) {
+    console.error(e)
+  } finally {
+    saving.value = false
   }
 }
 </script>
