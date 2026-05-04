@@ -66,15 +66,15 @@ async function save() {
   saving.value = true
   try {
     const body = {
-      reviewerName: data.name,
-      reviewerPhotoUrl: data.photo || undefined,
-      rating: data.rating,
-      content: data.content,
-      linkedServiceId: data.linkedServiceId || undefined,
-      tripPhotoUrl: data.tripPhoto || undefined,
-      isMonthly: data.isMonthly,
-      status: data.status,
-      reviewDate: data.date,
+      reviewerName:     data.reviewerName,
+      reviewerPhotoUrl: data.reviewerPhotoUrl || undefined,
+      rating:           data.rating,
+      content:          data.content,
+      linkedServiceId:  data.linkedServiceId || undefined,
+      tripPhotoUrl:     data.tripPhotoUrl || undefined,
+      isMonthly:        data.isMonthly,
+      status:           data.status,
+      reviewDate:       data.reviewDate,
     }
     if (isNew.value) {
       await request('/reviews', { method: 'POST', body })
