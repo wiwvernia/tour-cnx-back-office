@@ -88,7 +88,7 @@
       <v-card>
         <v-card-title class="pa-4 pb-2 text-base font-semibold">Visibility</v-card-title>
         <v-card-text class="flex flex-col gap-4">
-          <AppSelect v-model="form.status" label="Status" :options="['Draft', 'Published']" />
+          <AppSelect v-model="form.status" label="Status" :options="[{ label: 'Draft', value: 'draft' }, { label: 'Published', value: 'published' }]" />
         </v-card-text>
       </v-card>
 
@@ -139,7 +139,7 @@ const form = reactive({
   content: '',
   linkedServiceId: null,  // [AUDIT FIX] Replaces free-text trip
   isMonthly: false,
-  status: 'Draft',
+  status: 'draft',
   date: new Date().toISOString().substr(0, 10),
   tripPhoto: '',
   relatedArticles: [],   // [AUDIT FIX] Cross-link to articles
