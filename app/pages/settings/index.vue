@@ -39,13 +39,17 @@
                   style="height: 100px;"
                   @click="logoLightInput?.click()"
                 >
-                  <img v-if="form.logoLight" :src="form.logoLight" class="max-h-16 max-w-full object-contain p-2" />
+                  <div v-if="imageUploads.logoLight" class="flex items-center justify-center">
+                    <i class="mdi mdi-loading mdi-spin text-3xl text-gray-400" />
+                  </div>
+                  <img v-else-if="form.logoLight" :src="form.logoLight" class="max-h-16 max-w-full object-contain p-2" />
                   <div v-else class="text-center text-gray-300">
                     <i class="mdi mdi-image-plus text-4xl block" />
                     <span class="text-xs">Upload logo</span>
                   </div>
                 </div>
                 <input ref="logoLightInput" type="file" class="hidden" accept="image/*" @change="e => handleImage(e, 'logoLight')" />
+                <p class="text-xs text-gray-400 mt-1">PNG, JPG, WebP or GIF (max 10MB). Transparent BG recommended.</p>
               </v-col>
 
               <!-- Logo Dark -->
@@ -56,13 +60,17 @@
                   style="height: 100px;"
                   @click="logoDarkInput?.click()"
                 >
-                  <img v-if="form.logoDark" :src="form.logoDark" class="max-h-16 max-w-full object-contain p-2" />
+                  <div v-if="imageUploads.logoDark" class="flex items-center justify-center">
+                    <i class="mdi mdi-loading mdi-spin text-3xl text-gray-400" />
+                  </div>
+                  <img v-else-if="form.logoDark" :src="form.logoDark" class="max-h-16 max-w-full object-contain p-2" />
                   <div v-else class="text-center text-gray-600">
                     <i class="mdi mdi-image-plus text-4xl block" />
                     <span class="text-xs">Upload dark logo</span>
                   </div>
                 </div>
                 <input ref="logoDarkInput" type="file" class="hidden" accept="image/*" @change="e => handleImage(e, 'logoDark')" />
+                <p class="text-xs text-gray-400 mt-1">PNG, JPG, WebP or GIF (max 10MB). Transparent BG recommended.</p>
               </v-col>
             </v-row>
 
@@ -77,7 +85,8 @@
                   class="w-12 h-12 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors bg-white"
                   @click="faviconInput?.click()"
                 >
-                  <img v-if="form.favicon" :src="form.favicon" class="w-8 h-8 object-contain" />
+                  <i v-if="imageUploads.favicon" class="mdi mdi-loading mdi-spin text-xl text-gray-400" />
+                  <img v-else-if="form.favicon" :src="form.favicon" class="w-8 h-8 object-contain" />
                   <i v-else class="mdi mdi-image text-2xl text-gray-300" />
                 </div>
                 <span class="text-xs text-gray-400">Recommended: 32×32px or 64×64px .ico/.png</span>
@@ -228,6 +237,12 @@ const faviconInput = ref(null)
 const loading = ref(true)
 const saving = ref(false)
 
+const imageUploads = reactive({
+  logoLight: false,
+  logoDark: false,
+  favicon: false,
+})
+
 const fontOptions = [
   'Sarabun', 'Noto Sans Thai', 'Prompt', 'Kanit', 'Mitr',
   'Inter', 'Playfair Display', 'Cormorant Garamond',
@@ -308,12 +323,22 @@ async function fetchSettings() {
 
 onMounted(fetchSettings)
 
-function handleImage(e, field) {
+async function handleImage(e, field) {
   const file = e.target.files[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (ev) => { form[field] = ev.target.result }
-  reader.readAsDataURL(file)
+  imageUploads[field] = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('context', 'settings')
+    const res = await request('/media/upload', { method: 'POST', body: formData })
+    form[field] = res.data.url
+  } catch (err) {
+    console.error(err)
+  } finally {
+    imageUploads[field] = false
+    e.target.value = ''
+  }
 }
 
 function resetChanges() {
@@ -326,9 +351,9 @@ async function save() {
     const body = {
       siteName: form.siteName,
       tagline: form.tagline,
-      logoLightUrl: form.logoLight && !form.logoLight.startsWith('data:') ? form.logoLight : undefined,
-      logoDarkUrl: form.logoDark && !form.logoDark.startsWith('data:') ? form.logoDark : undefined,
-      faviconUrl: form.favicon && !form.favicon.startsWith('data:') ? form.favicon : undefined,
+      logoLightUrl: form.logoLight,
+      logoDarkUrl: form.logoDark,
+      faviconUrl: form.favicon,
       colorPrimary: form.colors.primary,
       colorAccent: form.colors.accent,
       colorBackground: form.colors.background,

@@ -42,7 +42,10 @@
             class="border-2 border-dashed rounded-lg pa-8 text-center cursor-pointer hover:bg-gray-50 transition-colors"
             @click="triggerTripPhoto"
           >
-            <div v-if="!form.tripPhoto">
+            <div v-if="tripUploading" class="flex items-center justify-center py-4">
+              <i class="mdi mdi-loading mdi-spin text-3xl text-gray-400" />
+            </div>
+            <div v-else-if="!form.tripPhotoUrl">
               <i class="mdi mdi-camera-plus text-5xl text-gray-300" />
               <p class="mt-2 text-sm text-gray-500">Upload trip photo</p>
             </div>
@@ -60,10 +63,17 @@
         <v-card-title class="pa-4 pb-2 text-base font-semibold">Reviewer Information</v-card-title>
         <v-card-text class="flex flex-col gap-4">
           <div class="flex flex-col items-center gap-2">
-            <v-avatar size="100" class="bg-gray-100 border cursor-pointer" @click="triggerAvatar">
-              <img v-if="form.reviewerPhotoUrl" :src="form.reviewerPhotoUrl" class="w-full h-full object-cover rounded-full" />
+            <div
+              class="border-2 border-dashed rounded-full cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center"
+              style="width:100px;height:100px;overflow:hidden;"
+              @click="triggerAvatar"
+            >
+              <div v-if="avatarUploading" class="flex items-center justify-center w-full h-full">
+                <i class="mdi mdi-loading mdi-spin text-3xl text-gray-400" />
+              </div>
+              <img v-else-if="form.reviewerPhotoUrl" :src="form.reviewerPhotoUrl" class="w-full h-full object-cover rounded-full" />
               <i v-else class="mdi mdi-account-plus text-5xl text-gray-300" />
-            </v-avatar>
+            </div>
             <button type="button" class="text-sm text-blue-600 hover:underline" @click="triggerAvatar">Change Photo</button>
             <input ref="avatarInput" type="file" class="hidden" accept="image/*" @change="handleAvatar" />
           </div>
@@ -122,15 +132,20 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
-
 const props = defineProps({
   initialData: { type: Object, default: () => ({}) },
   isNew: { type: Boolean, default: true },
 })
 
+const { request } = useApi()
+
 const avatarInput = ref(null)
 const tripPhotoInput = ref(null)
+const avatarUploading = ref(false)
+const tripUploading = ref(false)
+
+const serviceOptions = ref([])
+const articleOptions = ref([])
 
 const form = reactive({
   reviewerName: '',
@@ -162,20 +177,19 @@ watch(() => props.initialData, (data) => {
   })
 }, { immediate: true })
 
-// [AUDIT FIX] Simulates data from Services module (API in production)
-const serviceOptions = ref([
-  { value: 'svc-001', label: 'ทริปเชียงใหม่ 3 วัน 2 คืน' },
-  { value: 'svc-002', label: 'โปรแกรม Detox & Wellness 5 วัน' },
-  { value: 'svc-003', label: 'Half-Day City Temple Tour' },
-  { value: 'svc-004', label: 'Lanna Heritage Full-Day Experience' },
-])
-
-// [AUDIT FIX] Simulates data from Articles module (API in production)
-const articleOptions = ref([
-  { value: 'art-001', label: 'สืบสานตำนานล้านนา: เรียนรู้วิถีชีวิตวัดเก่าแก่' },
-  { value: 'art-002', label: 'Chiang Mai Detox Guide 2024' },
-  { value: 'art-003', label: '5 Hidden Gems in Old City' },
-])
+// Load entity options from API
+onMounted(async () => {
+  try {
+    const [svcRes, artRes] = await Promise.all([
+      request('/services', { params: { limit: 100 } }),
+      request('/articles', { params: { limit: 100 } }),
+    ])
+    serviceOptions.value = svcRes.data.map(s => ({ label: s.title, value: s.id }))
+    articleOptions.value = artRes.data.map(a => ({ label: a.title, value: a.id }))
+  } catch (e) {
+    console.error(e)
+  }
+})
 
 function toggleArticle(id) {
   const index = form.relatedArticles.indexOf(id)
@@ -186,20 +200,38 @@ function toggleArticle(id) {
 function triggerAvatar() { avatarInput.value?.click() }
 function triggerTripPhoto() { tripPhotoInput.value?.click() }
 
-function handleAvatar(e) {
+async function handleAvatar(e) {
   const file = e.target.files[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (ev) => { form.reviewerPhotoUrl = ev.target.result }
-  reader.readAsDataURL(file)
+  avatarUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await request('/media/upload', { method: 'POST', body: formData })
+    form.reviewerPhotoUrl = res.data.url
+  } catch (err) {
+    console.error(err)
+  } finally {
+    avatarUploading.value = false
+    e.target.value = ''
+  }
 }
 
-function handleTripPhoto(e) {
+async function handleTripPhoto(e) {
   const file = e.target.files[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (ev) => { form.tripPhotoUrl = ev.target.result }
-  reader.readAsDataURL(file)
+  tripUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await request('/media/upload', { method: 'POST', body: formData })
+    form.tripPhotoUrl = res.data.url
+  } catch (err) {
+    console.error(err)
+  } finally {
+    tripUploading.value = false
+    e.target.value = ''
+  }
 }
 
 defineExpose({ getData: () => ({ ...form }) })
