@@ -19,7 +19,7 @@
         <v-divider class="my-2" />
         <v-list-subheader>CONTACTS & MESSAGES</v-list-subheader>
         <v-list-item prepend-icon="mdi-email-outline" title="Inquiries" to="/contacts/inquiries" />
-        <v-list-item prepend-icon="mdi-office-building-cog" title="Contact Info Settings" to="/contacts/settings" />
+        <v-list-item prepend-icon="mdi-office-building-cog" title="Contact Info Settings" to="/settings/contact" />
         <v-divider class="my-2" />
         <v-list-subheader>SYSTEM</v-list-subheader>
         <v-list-item prepend-icon="mdi-shield-account" title="Admin Accounts" to="/accounts" />

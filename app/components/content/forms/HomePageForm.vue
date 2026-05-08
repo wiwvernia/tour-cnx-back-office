@@ -14,20 +14,24 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Background Image</label>
             <div
-              class="relative border-2 border-dashed rounded-lg overflow-hidden cursor-pointer hover:bg-gray-50 transition-colors"
-              :class="form.hero.bgImage ? 'border-gray-300' : 'border-gray-200 py-8 text-center'"
+              class="relative border-2 border-dashed rounded-lg overflow-hidden cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center bg-gray-50"
+              style="min-height: 192px;"
               @click="triggerUpload('heroImage')"
             >
+              <div v-if="imageUploads.heroBg" class="flex flex-col items-center justify-center py-8">
+                <i class="mdi mdi-loading mdi-spin text-5xl text-gray-400" />
+                <p class="text-sm text-gray-500 mt-2">Uploading to cloud...</p>
+              </div>
               <img
-                v-if="form.hero.bgImage"
+                v-else-if="form.hero.bgImage"
                 :src="form.hero.bgImage"
                 class="w-full h-48 object-cover"
               />
-              <template v-else>
+              <div v-else class="text-center py-8">
                 <i class="mdi mdi-image-plus text-5xl text-gray-300" />
                 <p class="mt-2 text-sm text-gray-400">Upload hero background image</p>
                 <p class="text-xs text-gray-300 mt-1">Recommended: 1920×1080px</p>
-              </template>
+              </div>
             </div>
             <input ref="heroImageInput" type="file" class="hidden" accept="image/*" @change="e => handleImage(e, 'hero', 'bgImage')" />
             <!-- [AUDIT FIX] Alt Text -->
@@ -74,19 +78,23 @@
             <v-col cols="12" md="6">
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Section Image</label>
               <div
-                class="border-2 border-dashed rounded-lg overflow-hidden cursor-pointer hover:bg-gray-50 transition-colors"
-                :class="form.philosophy.image ? 'border-gray-300' : 'border-gray-200 py-6 text-center'"
+                class="border-2 border-dashed rounded-lg overflow-hidden cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center bg-gray-50"
+                style="min-height: 160px;"
                 @click="triggerUpload('philosophyImage')"
               >
+                <div v-if="imageUploads.philosophyImg" class="flex flex-col items-center justify-center py-6">
+                  <i class="mdi mdi-loading mdi-spin text-4xl text-gray-400" />
+                  <p class="text-xs text-gray-500 mt-2">Uploading...</p>
+                </div>
                 <img
-                  v-if="form.philosophy.image"
+                  v-else-if="form.philosophy.image"
                   :src="form.philosophy.image"
                   class="w-full h-40 object-cover"
                 />
-                <template v-else>
+                <div v-else class="text-center py-6">
                   <i class="mdi mdi-image-plus text-4xl text-gray-300" />
                   <p class="mt-1 text-xs text-gray-400">Upload image</p>
-                </template>
+                </div>
               </div>
               <input ref="philosophyImageInput" type="file" class="hidden" accept="image/*" @change="e => handleImage(e, 'philosophy', 'image')" />
               <!-- [AUDIT FIX] Alt Text -->
@@ -232,7 +240,14 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
+
+const { request } = useApi()
+
+const imageUploads = reactive({
+  heroBg: false,
+  philosophyImg: false,
+})
 
 // ─── Drag & Drop ──────────────────────────────────────────────────────────────
 const dragIndex = ref(null)
@@ -268,6 +283,43 @@ const sectionOrder = ref([
   { key: 'featuredServices', label: 'Featured Services', visible: true },
   { key: 'testimonials', label: 'Testimonials / Reviews', visible: true },
 ])
+
+watch(() => props.initialData, (newVal) => {
+  if (!newVal || Object.keys(newVal).length === 0) return
+
+  // Sync sectionOrder
+  if (newVal.sectionOrder && Array.isArray(newVal.sectionOrder)) {
+    sectionOrder.value = JSON.parse(JSON.stringify(newVal.sectionOrder))
+  }
+
+  // Deep merge newVal into form reactive state to support async fetching from API
+  if (newVal.hero) {
+    form.hero = { ...form.hero, ...newVal.hero }
+    // Map db field name (bgImageUrl) back to form field name (bgImage)
+    if (newVal.hero.bgImageUrl) {
+      form.hero.bgImage = newVal.hero.bgImageUrl
+    }
+  }
+  if (newVal.philosophy) {
+    form.philosophy = { ...form.philosophy, ...newVal.philosophy }
+    // Map db field name (imageUrl) back to form field name (image)
+    if (newVal.philosophy.imageUrl) {
+      form.philosophy.image = newVal.philosophy.imageUrl
+    }
+  }
+  if (newVal.featuredServices) {
+    form.featuredServices = { ...form.featuredServices, ...newVal.featuredServices }
+  }
+  if (newVal.testimonials) {
+    form.testimonials = { ...form.testimonials, ...newVal.testimonials }
+  }
+  if (newVal.seo) {
+    form.seo = { ...form.seo, ...newVal.seo }
+  }
+  if (newVal.footer) {
+    form.footer = { ...form.footer, ...newVal.footer }
+  }
+}, { immediate: true, deep: true })
 
 const defaultFeatureTexts = [
   'การบริการที่เชื่อถือได้ระดับมืออาชีพ',
@@ -333,13 +385,31 @@ function triggerUpload(ref) {
   if (ref === 'philosophyImage') philosophyImageInput.value?.click()
 }
 
-function handleImage(e, section, field) {
+async function handleImage(e, section, field) {
   const file = e.target.files[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (ev) => { form[section][field] = ev.target.result }
-  reader.readAsDataURL(file)
+  
+  const uploadKey = section === 'hero' ? 'heroBg' : 'philosophyImg'
+  imageUploads[uploadKey] = true
+  
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('context', 'pages')
+    const res = await request('/media/upload', { method: 'POST', body: formData })
+    form[section][field] = res.data.url
+  } catch (err) {
+    console.error('Image upload failed:', err)
+  } finally {
+    imageUploads[uploadKey] = false
+    e.target.value = ''
+  }
 }
 
-defineExpose({ getData: () => JSON.parse(JSON.stringify(form)) })
+defineExpose({
+  getData: () => ({
+    ...JSON.parse(JSON.stringify(form)),
+    sectionOrder: JSON.parse(JSON.stringify(sectionOrder.value)),
+  })
+})
 </script>

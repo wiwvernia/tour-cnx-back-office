@@ -205,6 +205,20 @@
           </v-card-text>
         </v-card>
 
+        <!-- Navigation Menu Labels -->
+        <v-card class="mb-4">
+          <v-card-title class="pa-4 pb-2 text-base font-semibold flex items-center gap-2">
+            <i class="mdi mdi-form-textbox text-gray-400" />Navigation Labels
+          </v-card-title>
+          <v-card-text class="flex flex-col gap-4">
+            <AppInput v-model="form.menuServicesLabel" label="Services Menu Label" placeholder="บริการ" />
+            <AppInput v-model="form.menuArticlesLabel" label="Articles Menu Label" placeholder="บทความ" />
+            <AppInput v-model="form.menuReviewsLabel" label="Reviews Menu Label" placeholder="รีวิว" />
+            <AppInput v-model="form.menuContactLabel" label="Contact Menu Label" placeholder="ติดต่อเรา" />
+            <AppInput v-model="form.ctaBookLabel" label="CTA Button Label (Book)" placeholder="จองทัวร์" />
+          </v-card-text>
+        </v-card>
+
         <!-- Cache & Build -->
         <v-card>
           <v-card-title class="pa-4 pb-2 text-base font-semibold flex items-center gap-2">
@@ -278,6 +292,11 @@ const form = reactive({
     showLineChat: true,
     maintenanceMode: false,
   },
+  menuServicesLabel: 'บริการ',
+  menuArticlesLabel: 'บทความ',
+  menuReviewsLabel: 'รีวิว',
+  menuContactLabel: 'ติดต่อเรา',
+  ctaBookLabel: 'จองทัวร์',
 })
 
 function applyApiData(data) {
@@ -304,6 +323,11 @@ function applyApiData(data) {
   form.features.showContactForm = data.featureShowContactForm ?? true
   form.features.showLineChat = data.featureShowLineChat ?? true
   form.features.maintenanceMode = data.featureMaintenanceMode ?? false
+  form.menuServicesLabel = data.menuServicesLabel || 'บริการ'
+  form.menuArticlesLabel = data.menuArticlesLabel || 'บทความ'
+  form.menuReviewsLabel = data.menuReviewsLabel || 'รีวิว'
+  form.menuContactLabel = data.menuContactLabel || 'ติดต่อเรา'
+  form.ctaBookLabel = data.ctaBookLabel || 'จองทัวร์'
 }
 
 let savedSnapshot = {}
@@ -372,6 +396,11 @@ async function save() {
       featureShowContactForm: form.features.showContactForm,
       featureShowLineChat: form.features.showLineChat,
       featureMaintenanceMode: form.features.maintenanceMode,
+      menuServicesLabel: form.menuServicesLabel,
+      menuArticlesLabel: form.menuArticlesLabel,
+      menuReviewsLabel: form.menuReviewsLabel,
+      menuContactLabel: form.menuContactLabel,
+      ctaBookLabel: form.ctaBookLabel,
     }
     const res = await request('/settings/global', { method: 'PUT', body })
     applyApiData(res.data)

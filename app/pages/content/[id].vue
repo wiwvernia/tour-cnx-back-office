@@ -162,6 +162,7 @@ async function save() {
           featuredServices: formData?.featuredServices,
           testimonials: formData?.testimonials,
           footer: formData?.footer,
+          sectionOrder: formData?.sectionOrder,
         },
       }
     } else {
