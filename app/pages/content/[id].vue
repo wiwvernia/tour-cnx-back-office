@@ -118,8 +118,21 @@ const inSitemap = ref(true)
 const sections = ref([])
 
 function applyPageData(data) {
-  pageData.value = data
-  if (!isHomePage.value) {
+  if (isHomePage.value) {
+    // HomePageForm expects top-level keys: hero, philosophy, featuredServices, etc.
+    // These live inside contentJson from the API
+    const cj = data.contentJson || {}
+    pageData.value = {
+      ...cj,
+      seo: {
+        title: data.metaTitle || data.title || '',
+        description: data.metaDescription || '',
+        inSitemap: data.inSitemap ?? true,
+        autoSchema: data.autoSchema ?? true,
+      },
+    }
+  } else {
+    pageData.value = data
     title.value = data.title || ''
     slug.value = data.slug || id
     metaTitle.value = data.metaTitle || ''

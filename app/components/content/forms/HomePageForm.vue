@@ -284,53 +284,17 @@ const sectionOrder = ref([
   { key: 'testimonials', label: 'Testimonials / Reviews', visible: true },
 ])
 
-watch(() => props.initialData, (newVal) => {
-  if (!newVal || Object.keys(newVal).length === 0) return
-
-  // Sync sectionOrder
-  if (newVal.sectionOrder && Array.isArray(newVal.sectionOrder)) {
-    sectionOrder.value = JSON.parse(JSON.stringify(newVal.sectionOrder))
-  }
-
-  // Deep merge newVal into form reactive state to support async fetching from API
-  if (newVal.hero) {
-    form.hero = { ...form.hero, ...newVal.hero }
-    // Map db field name (bgImageUrl) back to form field name (bgImage)
-    if (newVal.hero.bgImageUrl) {
-      form.hero.bgImage = newVal.hero.bgImageUrl
-    }
-  }
-  if (newVal.philosophy) {
-    form.philosophy = { ...form.philosophy, ...newVal.philosophy }
-    // Map db field name (imageUrl) back to form field name (image)
-    if (newVal.philosophy.imageUrl) {
-      form.philosophy.image = newVal.philosophy.imageUrl
-    }
-  }
-  if (newVal.featuredServices) {
-    form.featuredServices = { ...form.featuredServices, ...newVal.featuredServices }
-  }
-  if (newVal.testimonials) {
-    form.testimonials = { ...form.testimonials, ...newVal.testimonials }
-  }
-  if (newVal.seo) {
-    form.seo = { ...form.seo, ...newVal.seo }
-  }
-  if (newVal.footer) {
-    form.footer = { ...form.footer, ...newVal.footer }
-  }
-}, { immediate: true, deep: true })
-
 const defaultFeatureTexts = [
   'การบริการที่เชื่อถือได้ระดับมืออาชีพ',
   'เส้นทางท่องเที่ยวที่ดำเนิงเส้นสัมผัสและสุมสน',
   'มาตรฐานที่พักและยานพาหนะระดับ 5 ดาว',
 ]
 
+// ── form must be declared BEFORE watch so that { immediate: true } can mutate it ──
 const form = reactive({
   hero: {
     bgImage: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&q=80&w=1920',
-    bgImageAlt: 'Aerial view of Chiang Mai ancient temples at sunrise', // [AUDIT FIX]
+    bgImageAlt: 'Aerial view of Chiang Mai ancient temples at sunrise',
     heading: 'สัมผัสเสน่ห์ล้านนา\nเที่ยวเชียงใหม่\nกับเรา',
     subheading: 'ดิ่มด่ำกับวัฒนธรรมที่สุ่มลึกและการดูแลระดับพรีเมียม เพื่อให้การพักผ่อนของคุณคือความทรงจำที่ล้ำค่าที่สุดในชีวิต',
     primaryBtn: { text: 'จองทัวร์เลย', link: '/contact' },
@@ -341,7 +305,7 @@ const form = reactive({
     heading: 'ประสบการณ์การเดินทางที่เหนือกว่าความคาดหมาย',
     description: 'ด้วยประสบการณ์กว่า 15 ปีในพื้นที่เชียงใหม่ เราเข้าใจความสุขของการเดินทางสำหรับผู้ใหญ่ที่ต้องการความสะดวกสบาย ความปลอดภัย และเรื่องราวที่น่าสนใจในเบื้องหลังสถานที่ท่องเที่ยวแต่ละแห่ง',
     image: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&q=80&w=800',
-    imageAlt: 'Traditional Lanna craftsmanship and heritage', // [AUDIT FIX]
+    imageAlt: 'Traditional Lanna craftsmanship and heritage',
     quote: {
       text: '"ความใส่ใจคือหัวใจของเรา"',
       description: 'เราคัดสรรทุกรายละเอียดด้วยความสำนึก เติมเต็มด้วยประสบการณ์ที่ปลอดภัย สงบ และเติบโนด้วยคุณภาพเพื่อนักเดินทางที่มีประสบการณ์สูง',
@@ -377,8 +341,35 @@ const form = reactive({
     instagram: 'https://instagram.com/lannaheritage',
     copyright: '© 2024 Lanna Heritage Travel. All rights reserved.',
   },
-  ...props.initialData,
 })
+
+watch(() => props.initialData, (newVal) => {
+  if (!newVal || Object.keys(newVal).length === 0) return
+
+  // Deep clone to decouple from Nuxt's read-only prop proxies
+  const d = JSON.parse(JSON.stringify(newVal))
+
+  // Sync sectionOrder
+  if (d.sectionOrder && Array.isArray(d.sectionOrder)) {
+    sectionOrder.value = d.sectionOrder
+  }
+
+  // Deep merge from API data into form
+  if (d.hero) {
+    Object.assign(form.hero, d.hero)
+    // bgImageUrl (saved key) → bgImage (form key)
+    if (d.hero.bgImageUrl) form.hero.bgImage = d.hero.bgImageUrl
+  }
+  if (d.philosophy) {
+    Object.assign(form.philosophy, d.philosophy)
+    // imageUrl (saved key) → image (form key)
+    if (d.philosophy.imageUrl) form.philosophy.image = d.philosophy.imageUrl
+  }
+  if (d.featuredServices) Object.assign(form.featuredServices, d.featuredServices)
+  if (d.testimonials) Object.assign(form.testimonials, d.testimonials)
+  if (d.seo) Object.assign(form.seo, d.seo)
+  if (d.footer) Object.assign(form.footer, d.footer)
+}, { immediate: true, deep: true })
 
 function triggerUpload(ref) {
   if (ref === 'heroImage') heroImageInput.value?.click()
