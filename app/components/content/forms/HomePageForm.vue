@@ -113,17 +113,26 @@
           <div>
             <div class="flex items-center gap-1 mb-2">
               <label class="block text-sm font-medium text-gray-700">Feature Bullets (3 items)</label>
-              <v-tooltip location="top" max-width="280">
+              <v-menu open-on-hover :close-delay="200" location="top" max-width="290">
                 <template #activator="{ props }">
                   <i v-bind="props" class="mdi mdi-help-circle-outline text-gray-400 cursor-help text-base" />
                 </template>
-                <div class="text-xs leading-relaxed">
-                  <div class="font-semibold mb-1">ชื่อ icon มาจาก Material Design Icons</div>
-                  <div class="mb-1">รูปแบบ: <code class="bg-white/20 px-1 rounded">mdi-ชื่อ-icon</code></div>
-                  <div class="mb-1">ตัวอย่าง: <code class="bg-white/20 px-1 rounded">mdi-shield-check</code>, <code class="bg-white/20 px-1 rounded">mdi-map-marker</code>, <code class="bg-white/20 px-1 rounded">mdi-star</code></div>
-                  <div>ค้นหา icon เพิ่มเติมได้ที่ pictogrammers.com/library/mdi</div>
-                </div>
-              </v-tooltip>
+                <v-card class="pa-3">
+                  <div class="text-xs leading-relaxed text-gray-700">
+                    <div class="font-semibold mb-1">ชื่อ icon มาจาก Material Design Icons</div>
+                    <div class="mb-1">รูปแบบ: <code class="bg-gray-100 px-1 rounded">mdi-ชื่อ-icon</code></div>
+                    <div class="mb-2">ตัวอย่าง: <code class="bg-gray-100 px-1 rounded">mdi-shield-check</code>, <code class="bg-gray-100 px-1 rounded">mdi-map-marker</code>, <code class="bg-gray-100 px-1 rounded">mdi-star</code></div>
+                    <a
+                      href="https://pictogrammers.com/library/mdi/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-blue-600 hover:underline font-medium"
+                    >
+                      ค้นหา icon ทั้งหมด →
+                    </a>
+                  </div>
+                </v-card>
+              </v-menu>
             </div>
             <div v-for="(feat, i) in form.philosophy.features" :key="i" class="flex gap-2 mb-2 items-center">
               <div class="w-32 shrink-0">
