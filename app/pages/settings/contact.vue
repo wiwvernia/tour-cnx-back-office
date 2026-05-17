@@ -89,55 +89,7 @@
           </v-card-text>
         </v-card>
 
-        <!-- Office Visual Cover -->
-        <v-card class="border border-gray-200/80 rounded-xl overflow-hidden" elevation="0">
-          <div class="bg-gray-50/50 px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
-            <i class="mdi mdi-image text-lg text-gray-500" />
-            <span class="font-semibold text-gray-800 text-sm">Office Image</span>
-          </div>
-          <v-card-text class="p-5">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Cover Photo / Office Background Image</label>
-            <div
-              class="border-2 border-dashed rounded-xl overflow-hidden cursor-pointer transition-all duration-300 relative group flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100/50 min-h-[220px]"
-              style="border-color: #cbd5e1;"
-              @click="officeImageInput?.click()"
-            >
-              <!-- Loading overlay -->
-              <div v-if="uploadingImage" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-                <div class="text-center">
-                  <i class="mdi mdi-loading mdi-spin text-4xl text-blue-600 block mb-2" />
-                  <span class="text-xs text-gray-500 font-semibold">Uploading Image...</span>
-                </div>
-              </div>
-
-              <!-- Image preview -->
-              <template v-if="form.officeImageUrl">
-                <img :src="form.officeImageUrl" class="w-full max-h-[320px] object-cover transition duration-300" />
-                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
-                  <span class="px-4 py-2 bg-white/95 rounded-lg text-xs font-semibold text-gray-800 shadow flex items-center gap-1.5">
-                    <i class="mdi mdi-image-edit-outline text-base" /> Change Image
-                  </span>
-                </div>
-              </template>
-
-              <!-- Empty placeholder -->
-              <div v-else class="text-center py-8 px-4">
-                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 mx-auto mb-3">
-                  <i class="mdi mdi-image-plus text-2xl text-gray-400" />
-                </div>
-                <p class="text-sm font-medium text-gray-600">Click to upload brand office image</p>
-                <p class="text-xs text-gray-400 mt-1">Recommended: Horizontal aspect ratio, max 10MB (PNG, JPG, WebP)</p>
-              </div>
-            </div>
-            <input 
-              ref="officeImageInput" 
-              type="file" 
-              class="hidden" 
-              accept="image/*" 
-              @change="handleOfficeImageUpload" 
-            />
-          </v-card-text>
-        </v-card>
+        <!-- Office Image — hidden until displayed on frontend -->
       </v-col>
 
       <!-- Right Column: Direct Contact & Socials -->
