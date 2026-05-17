@@ -41,7 +41,7 @@
     </div>
 
     <!-- Services Table -->
-    <AppTable v-else :columns="columns" :rows="filteredServices">
+    <AppTable v-else :columns="columns" :rows="services">
       <template #title="{ row }">
         <div class="font-medium">{{ row.title }}</div>
         <div class="text-xs text-gray-400">/{{ row.slug }}</div>
@@ -64,6 +64,11 @@
       </template>
       <template #empty>No services found</template>
     </AppTable>
+
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex justify-center mt-4">
+      <v-pagination v-model="page" :length="totalPages" :total-visible="7" rounded="0" />
+    </div>
 
     <!-- Delete Confirm Dialog -->
     <v-dialog v-model="deleteDialog" max-width="400">
@@ -91,6 +96,8 @@ const { request } = useApi()
 const search = ref('')
 const filterCategoryId = ref(null)
 const filterStatus = ref(null)
+const page = ref(1)
+const totalPages = ref(1)
 
 const statusOptions = [
   { label: 'All Statuses', value: null },
@@ -117,20 +124,19 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-CA')
 }
 
-const filteredServices = computed(() =>
-  services.value.filter(s => {
-    const matchSearch = !search.value || s.title.toLowerCase().includes(search.value.toLowerCase())
-    const matchCat    = !filterCategoryId.value || s.categoryId === filterCategoryId.value
-    const matchStatus = !filterStatus.value || s.status === filterStatus.value
-    return matchSearch && matchCat && matchStatus
-  })
-)
+watch([search, filterCategoryId, filterStatus], () => { page.value = 1 })
+watch(page, fetchServices)
 
 async function fetchServices() {
   loading.value = true
   try {
-    const res = await request('/services', { params: { limit: 100 } })
+    const params = { page: page.value, limit: 20 }
+    if (search.value) params.search = search.value
+    if (filterCategoryId.value) params.categoryId = filterCategoryId.value
+    if (filterStatus.value) params.status = filterStatus.value
+    const res = await request('/services', { params })
     services.value = res.data
+    totalPages.value = res.meta?.totalPages ?? 1
   } catch (e) {
     console.error(e)
   } finally {

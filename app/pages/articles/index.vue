@@ -42,7 +42,7 @@
     </div>
 
     <!-- Articles Table -->
-    <AppTable v-else :columns="columns" :rows="filteredArticles">
+    <AppTable v-else :columns="columns" :rows="articles">
       <template #title="{ row }">
         <div class="d-flex align-center py-2">
           <img
@@ -96,6 +96,11 @@
       </template>
     </AppTable>
 
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex justify-center mt-4">
+      <v-pagination v-model="page" :length="totalPages" :total-visible="7" rounded="0" />
+    </div>
+
     <!-- Delete Confirm Dialog -->
     <v-dialog v-model="deleteDialog" max-width="400">
       <v-card>
@@ -123,6 +128,8 @@ const search = ref('')
 const filterCategoryId = ref(null)
 const filterStatus = ref(null)
 const filterFeatured = ref(false)
+const page = ref(1)
+const totalPages = ref(1)
 
 const statusOptions = [
   { label: 'All Statuses', value: null },
@@ -150,21 +157,20 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-const filteredArticles = computed(() =>
-  articles.value.filter(a => {
-    const matchSearch   = !search.value || a.title.toLowerCase().includes(search.value.toLowerCase())
-    const matchCat      = !filterCategoryId.value || a.categoryId === filterCategoryId.value
-    const matchStatus   = !filterStatus.value || a.status === filterStatus.value
-    const matchFeatured = !filterFeatured.value || a.isFeatured
-    return matchSearch && matchCat && matchStatus && matchFeatured
-  })
-)
+watch([search, filterCategoryId, filterStatus, filterFeatured], () => { page.value = 1 })
+watch(page, fetchArticles)
 
 async function fetchArticles() {
   loading.value = true
   try {
-    const res = await request('/articles', { params: { limit: 100 } })
+    const params = { page: page.value, limit: 20 }
+    if (search.value) params.search = search.value
+    if (filterCategoryId.value) params.categoryId = filterCategoryId.value
+    if (filterStatus.value) params.status = filterStatus.value
+    if (filterFeatured.value) params.isFeatured = true
+    const res = await request('/articles', { params })
     articles.value = res.data
+    totalPages.value = res.meta?.totalPages ?? 1
   } catch (e) {
     console.error(e)
   } finally {

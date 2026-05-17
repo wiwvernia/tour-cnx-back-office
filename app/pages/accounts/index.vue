@@ -115,6 +115,11 @@
       </AppTable>
     </v-card>
 
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex justify-center mt-4">
+      <v-pagination v-model="page" :length="totalPages" :total-visible="7" rounded="0" />
+    </div>
+
     <!-- Create / Edit Dialog -->
     <v-dialog v-model="dialog" max-width="440" persistent>
       <v-card>
@@ -207,6 +212,8 @@ const columns = [
 ]
 
 const accounts = ref([])
+const page = ref(1)
+const totalPages = ref(1)
 const loading = ref(true)
 const saving = ref(false)
 
@@ -235,11 +242,14 @@ function formatRelative(iso) {
   return new Date(iso).toLocaleDateString('en-CA')
 }
 
+watch(page, fetchAccounts)
+
 async function fetchAccounts() {
   loading.value = true
   try {
-    const res = await request('/users', { params: { limit: 100 } })
+    const res = await request('/users', { params: { page: page.value, limit: 20 } })
     accounts.value = res.data
+    totalPages.value = res.meta?.totalPages ?? 1
   } catch (e) {
     console.error(e)
   } finally {
