@@ -211,6 +211,7 @@
             <i class="mdi mdi-form-textbox text-gray-400" />Navigation Labels
           </v-card-title>
           <v-card-text class="flex flex-col gap-4">
+            <AppInput v-model="form.menuHomeLabel" label="Home Menu Label" placeholder="หน้าแรก" />
             <AppInput v-model="form.menuServicesLabel" label="Services Menu Label" placeholder="บริการ" />
             <AppInput v-model="form.menuArticlesLabel" label="Articles Menu Label" placeholder="บทความ" />
             <AppInput v-model="form.menuReviewsLabel" label="Reviews Menu Label" placeholder="รีวิว" />
@@ -292,6 +293,7 @@ const form = reactive({
     showLineChat: true,
     maintenanceMode: false,
   },
+  menuHomeLabel: 'หน้าแรก',
   menuServicesLabel: 'บริการ',
   menuArticlesLabel: 'บทความ',
   menuReviewsLabel: 'รีวิว',
@@ -323,6 +325,7 @@ function applyApiData(data) {
   form.features.showContactForm = data.featureShowContactForm ?? true
   form.features.showLineChat = data.featureShowLineChat ?? true
   form.features.maintenanceMode = data.featureMaintenanceMode ?? false
+  form.menuHomeLabel = data.menuHomeLabel || 'หน้าแรก'
   form.menuServicesLabel = data.menuServicesLabel || 'บริการ'
   form.menuArticlesLabel = data.menuArticlesLabel || 'บทความ'
   form.menuReviewsLabel = data.menuReviewsLabel || 'รีวิว'
@@ -396,6 +399,7 @@ async function save() {
       featureShowContactForm: form.features.showContactForm,
       featureShowLineChat: form.features.showLineChat,
       featureMaintenanceMode: form.features.maintenanceMode,
+      menuHomeLabel: form.menuHomeLabel,
       menuServicesLabel: form.menuServicesLabel,
       menuArticlesLabel: form.menuArticlesLabel,
       menuReviewsLabel: form.menuReviewsLabel,
