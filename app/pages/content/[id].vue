@@ -49,9 +49,7 @@
               class="flex items-center justify-between mb-3 px-4 py-3 rounded-lg border border-gray-200 bg-gray-50"
             >
               <span class="font-medium text-gray-800">{{ section }}</span>
-              <AppBtn variant="ghost" color="secondary" size="sm" icon>
-                <i class="mdi mdi-pencil" />
-              </AppBtn>
+              <!-- edit per-section button hidden until implemented -->
             </div>
           </v-card-text>
         </v-card>

@@ -220,24 +220,7 @@
           </v-card-text>
         </v-card>
 
-        <!-- Cache & Build -->
-        <v-card>
-          <v-card-title class="pa-4 pb-2 text-base font-semibold flex items-center gap-2">
-            <i class="mdi mdi-rocket-launch text-gray-400" />Build & Cache
-          </v-card-title>
-          <v-card-text class="flex flex-col gap-3">
-            <div class="rounded-lg bg-gray-50 border p-3 text-sm text-gray-600">
-              <div class="font-semibold text-gray-700 mb-1">Last build</div>
-              <div class="text-xs text-gray-400">2 hours ago — <span class="text-green-600 font-medium">Success</span></div>
-            </div>
-            <AppBtn variant="outline" color="primary" class="w-full">
-              <i class="mdi mdi-refresh mr-1" />Rebuild Frontend
-            </AppBtn>
-            <AppBtn variant="outline" color="secondary" class="w-full">
-              <i class="mdi mdi-broom mr-1" />Clear Cache
-            </AppBtn>
-          </v-card-text>
-        </v-card>
+        <!-- Build & Cache — hidden until implemented -->
       </v-col>
     </v-row>
   </div>
