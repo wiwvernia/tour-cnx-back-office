@@ -111,7 +111,20 @@
 
           <!-- Feature Bullets -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Feature Bullets (3 items)</label>
+            <div class="flex items-center gap-1 mb-2">
+              <label class="block text-sm font-medium text-gray-700">Feature Bullets (3 items)</label>
+              <v-tooltip location="top" max-width="280">
+                <template #activator="{ props }">
+                  <i v-bind="props" class="mdi mdi-help-circle-outline text-gray-400 cursor-help text-base" />
+                </template>
+                <div class="text-xs leading-relaxed">
+                  <div class="font-semibold mb-1">ชื่อ icon มาจาก Material Design Icons</div>
+                  <div class="mb-1">รูปแบบ: <code class="bg-white/20 px-1 rounded">mdi-ชื่อ-icon</code></div>
+                  <div class="mb-1">ตัวอย่าง: <code class="bg-white/20 px-1 rounded">mdi-shield-check</code>, <code class="bg-white/20 px-1 rounded">mdi-map-marker</code>, <code class="bg-white/20 px-1 rounded">mdi-star</code></div>
+                  <div>ค้นหา icon เพิ่มเติมได้ที่ pictogrammers.com/library/mdi</div>
+                </div>
+              </v-tooltip>
+            </div>
             <div v-for="(feat, i) in form.philosophy.features" :key="i" class="flex gap-2 mb-2 items-center">
               <div class="w-32 shrink-0">
                 <AppInput v-model="feat.icon" placeholder="mdi-shield-check" />
