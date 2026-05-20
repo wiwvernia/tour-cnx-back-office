@@ -6,6 +6,13 @@ export default defineNuxtConfig({
   devtools: { enabled: process.env.NODE_ENV !== 'production' },
   ssr: false,
 
+  nitro: {
+    preset: 'static',
+    output: {
+      publicDir: 'dist',
+    },
+  },
+
   runtimeConfig: {
     public: {
       apiBase: 'http://localhost:8080/api/v1',
