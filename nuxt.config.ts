@@ -42,7 +42,7 @@ export default defineNuxtConfig({
     (_options, nuxt) => {
       nuxt.hooks.hook('vite:extendConfig', (config) => {
         // @ts-expect-error
-        config.plugins.push(vuetify({ autoImport: true }))
+        config.plugins.push(vuetify({ autoImport: true, styles: 'none' }))
       })
     },
   ],
