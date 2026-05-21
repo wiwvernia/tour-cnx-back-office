@@ -7,10 +7,16 @@ export default defineNuxtConfig({
   ssr: false,
 
   nitro: {
-    preset: 'static',
+    preset: "cloudflare_module",
+
     output: {
       publicDir: 'dist',
     },
+
+    cloudflare: {
+      deployConfig: true,
+      nodeCompat: true
+    }
   },
 
   runtimeConfig: {
@@ -37,15 +43,7 @@ export default defineNuxtConfig({
     { path: '~/components', pathPrefix: false }
   ],
 
-  modules: [
-    '@nuxtjs/tailwindcss',
-    (_options, nuxt) => {
-      nuxt.hooks.hook('vite:extendConfig', (config) => {
-        // @ts-expect-error
-        config.plugins.push(vuetify({ autoImport: true }))
-      })
-    },
-  ],
+  modules: ["nitro-cloudflare-dev"],
 
   vite: {
     vue: {
