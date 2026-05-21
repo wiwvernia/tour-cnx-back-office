@@ -1,5 +1,8 @@
 name = "wood-furniture-back-office"
 compatibility_date = "2025-01-01"
 
+[vars]
+NUXT_PUBLIC_API_BASE = "https://wood-furniture-api.fly.dev/api/v1"
+
 [assets]
 directory = "./dist"
