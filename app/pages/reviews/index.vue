@@ -43,72 +43,72 @@
     </div>
 
     <!-- Reviews Table -->
-    <v-card v-else shadow="sm">
-      <AppTable :columns="columns" :rows="reviews" row-key="id">
-        <template #reviewer="{ row }">
-          <div class="flex items-center gap-3 py-2">
-            <v-avatar size="40" class="bg-gray-100 shrink-0">
-              <img v-if="row.reviewerPhotoUrl" :src="row.reviewerPhotoUrl" class="w-full h-full object-cover rounded-full" />
-              <i v-else class="mdi mdi-account text-gray-400" />
-            </v-avatar>
-            <div>
-              <div class="font-medium text-gray-800">{{ row.reviewerName }}</div>
-              <div class="text-xs text-gray-400">Customer</div>
-            </div>
+    <AppTable v-else :columns="columns" :rows="reviews" row-key="id">
+      <template #reviewer="{ row }">
+        <div class="flex items-center gap-3 py-2">
+          <v-avatar size="40" class="bg-gray-100 shrink-0">
+            <img v-if="row.reviewerPhotoUrl" :src="row.reviewerPhotoUrl" class="w-full h-full object-cover rounded-full" />
+            <i v-else class="mdi mdi-account text-gray-400" />
+          </v-avatar>
+          <div>
+            <div class="font-medium text-gray-800">{{ row.reviewerName }}</div>
+            <div class="text-xs text-gray-400">Customer</div>
           </div>
-        </template>
+        </div>
+      </template>
 
-        <template #rating="{ row }">
-          <div class="flex gap-0.5">
-            <i
-              v-for="i in 5"
-              :key="i"
-              class="mdi mdi-star text-xs"
-              :class="i <= row.rating ? 'text-yellow-400' : 'text-gray-200'"
-            />
-          </div>
-        </template>
+      <template #rating="{ row }">
+        <div class="flex gap-0.5">
+          <i
+            v-for="i in 5"
+            :key="i"
+            class="mdi mdi-star text-xs"
+            :class="i <= row.rating ? 'text-yellow-400' : 'text-gray-200'"
+          />
+        </div>
+      </template>
 
-        <template #service="{ row }">
-          <span class="text-sm truncate max-w-[200px] block">{{ row.linkedServiceTitle || '—' }}</span>
-        </template>
+      <template #service="{ row }">
+        <span class="text-sm truncate max-w-[200px] block">{{ row.linkedServiceTitle || '—' }}</span>
+      </template>
 
-        <template #featured="{ row }">
-          <span
-            v-if="row.isMonthly"
-            class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-red-800 text-white"
-          >MONTHLY</span>
-          <span v-else class="text-gray-300">—</span>
-        </template>
+      <template #featured="{ row }">
+        <span
+          v-if="row.isMonthly"
+          class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-red-800 text-white"
+        >MONTHLY</span>
+        <span v-else class="text-gray-300">—</span>
+      </template>
 
-        <template #date="{ row }">
-          <span class="text-xs text-gray-500">{{ formatDate(row.reviewDate) }}</span>
-        </template>
+      <template #date="{ row }">
+        <span class="text-xs text-gray-500">{{ formatDate(row.reviewDate) }}</span>
+      </template>
 
-        <template #status="{ row }">
-          <span
-            class="inline-block px-2 py-0.5 text-xs font-medium rounded"
-            :class="row.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'"
-          >{{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}</span>
-        </template>
+      <template #status="{ row }">
+        <span
+          class="inline-block px-2 py-0.5 text-xs font-medium rounded"
+          :class="row.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'"
+        >{{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}</span>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="flex gap-1">
-            <AppBtn variant="ghost" color="primary" size="sm" :to="'/reviews/' + row.id" icon>
-              <i class="mdi mdi-pencil" />
-            </AppBtn>
-            <AppBtn variant="ghost" color="danger" size="sm" icon @click="confirmDelete(row)">
-              <i class="mdi mdi-delete" />
-            </AppBtn>
-          </div>
-        </template>
-      </AppTable>
+      <template #actions="{ row }">
+        <div class="flex gap-1">
+          <AppBtn variant="outline" color="primary" size="sm" :to="'/reviews/' + row.id" icon>
+            <i class="mdi mdi-pencil" />
+          </AppBtn>
+          <AppBtn variant="outline" color="danger" size="sm" icon @click="confirmDelete(row)">
+            <i class="mdi mdi-delete" />
+          </AppBtn>
+        </div>
+      </template>
 
-      <div v-if="reviews.length === 0" class="py-16 text-center text-gray-400">
-        <i class="mdi mdi-star-off-outline text-5xl mb-2 block" />
-        No reviews found
-      </div>
-    </v-card>
+      <template #empty>
+        <div class="flex flex-col items-center gap-2 py-8 text-gray-400">
+          <i class="mdi mdi-star-off-outline text-5xl" />
+          No reviews found
+        </div>
+      </template>
+    </AppTable>
 
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex justify-center mt-4">

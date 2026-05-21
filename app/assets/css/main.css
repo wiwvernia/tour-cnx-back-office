@@ -1,0 +1,6 @@
+/* ── Browser native button reset (no Tailwind class overrides here) ── */
+button, [type='button'], [type='reset'], [type='submit'] {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none; /* removes browser's default 2px outset border */
+}

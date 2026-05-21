@@ -59,8 +59,14 @@
         <span class="text-sm text-gray-500">{{ formatDate(row.updatedAt) }}</span>
       </template>
       <template #actions="{ row }">
-        <AppBtn variant="ghost" color="primary" size="sm" :to="'/services/' + row.id">Edit</AppBtn>
-        <AppBtn variant="ghost" color="danger" size="sm" @click="confirmDelete(row)">Delete</AppBtn>
+        <div class="flex gap-1">
+          <AppBtn variant="outline" color="primary" size="sm" :icon="true" :to="'/services/' + row.id">
+            <i class="mdi mdi-pencil text-base" />
+          </AppBtn>
+          <AppBtn variant="outline" color="danger" size="sm" :icon="true" @click="confirmDelete(row)">
+            <i class="mdi mdi-delete text-base" />
+          </AppBtn>
+        </div>
       </template>
       <template #empty>No services found</template>
     </AppTable>

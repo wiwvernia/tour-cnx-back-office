@@ -81,12 +81,14 @@
         <span class="text-xs text-gray-500">{{ formatDate(row.publishedAt || row.createdAt) }}</span>
       </template>
       <template #actions="{ row }">
-        <AppBtn variant="ghost" color="primary" size="sm" :icon="true" :to="'/articles/' + row.id">
-          <i class="mdi mdi-pencil text-base" />
-        </AppBtn>
-        <AppBtn variant="ghost" color="danger" size="sm" :icon="true" @click="confirmDelete(row)">
-          <i class="mdi mdi-delete text-base" />
-        </AppBtn>
+        <div class="flex gap-1">
+          <AppBtn variant="outline" color="primary" size="sm" :icon="true" :to="'/articles/' + row.id">
+            <i class="mdi mdi-pencil text-base" />
+          </AppBtn>
+          <AppBtn variant="outline" color="danger" size="sm" :icon="true" @click="confirmDelete(row)">
+            <i class="mdi mdi-delete text-base" />
+          </AppBtn>
+        </div>
       </template>
       <template #empty>
         <div class="flex flex-col items-center gap-2 text-gray-400">

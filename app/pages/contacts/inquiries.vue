@@ -30,57 +30,57 @@
     </div>
 
     <!-- Table -->
-    <v-card v-else shadow="sm">
-      <AppTable :columns="columns" :rows="inquiries" row-key="id">
-        <template #customer="{ row }">
-          <div class="py-2">
-            <div class="font-medium text-gray-800">{{ row.name }}</div>
-            <div class="text-xs text-gray-400">{{ row.email }}</div>
-          </div>
-        </template>
+    <AppTable v-else :columns="columns" :rows="inquiries" row-key="id">
+      <template #customer="{ row }">
+        <div class="py-2">
+          <div class="font-medium text-gray-800">{{ row.name }}</div>
+          <div class="text-xs text-gray-400">{{ row.email }}</div>
+        </div>
+      </template>
 
-        <template #subject="{ row }">
-          <div class="flex items-center gap-2 text-sm">
-            <span
-              v-if="row.status === 'new'"
-              class="inline-block px-1.5 py-0.5 text-xs font-bold rounded bg-red-500 text-white"
-            >NEW</span>
-            {{ row.subject }}
-          </div>
-        </template>
-
-        <template #phone="{ row }">
-          <span class="text-sm text-gray-600">{{ row.phone }}</span>
-        </template>
-
-        <template #date="{ row }">
-          <span class="text-xs text-gray-400">{{ formatDate(row.receivedAt) }}</span>
-        </template>
-
-        <template #status="{ row }">
+      <template #subject="{ row }">
+        <div class="flex items-center gap-2 text-sm">
           <span
-            class="inline-block px-2 py-0.5 text-xs font-medium rounded"
-            :class="statusClass(row.status)"
-          >{{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}</span>
-        </template>
+            v-if="row.status === 'new'"
+            class="inline-block px-1.5 py-0.5 text-xs font-bold rounded bg-red-500 text-white"
+          >NEW</span>
+          {{ row.subject }}
+        </div>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="flex gap-1">
-            <AppBtn variant="ghost" color="primary" size="sm" :to="'/contacts/' + row.id" icon>
-              <i class="mdi mdi-eye" />
-            </AppBtn>
-            <AppBtn variant="ghost" color="danger" size="sm" icon @click="confirmDelete(row)">
-              <i class="mdi mdi-delete" />
-            </AppBtn>
-          </div>
-        </template>
-      </AppTable>
+      <template #phone="{ row }">
+        <span class="text-sm text-gray-600">{{ row.phone }}</span>
+      </template>
 
-      <div v-if="inquiries.length === 0" class="py-16 text-center text-gray-400">
-        <i class="mdi mdi-email-off-outline text-5xl mb-2 block" />
-        No inquiries found
-      </div>
-    </v-card>
+      <template #date="{ row }">
+        <span class="text-xs text-gray-400">{{ formatDate(row.receivedAt) }}</span>
+      </template>
+
+      <template #status="{ row }">
+        <span
+          class="inline-block px-2 py-0.5 text-xs font-medium rounded"
+          :class="statusClass(row.status)"
+        >{{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}</span>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="flex gap-1">
+          <AppBtn variant="outline" color="primary" size="sm" :to="'/contacts/' + row.id" icon>
+            <i class="mdi mdi-eye" />
+          </AppBtn>
+          <AppBtn variant="outline" color="danger" size="sm" icon @click="confirmDelete(row)">
+            <i class="mdi mdi-delete" />
+          </AppBtn>
+        </div>
+      </template>
+
+      <template #empty>
+        <div class="flex flex-col items-center gap-2 py-8 text-gray-400">
+          <i class="mdi mdi-email-off-outline text-5xl" />
+          No inquiries found
+        </div>
+      </template>
+    </AppTable>
 
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex justify-center mt-4">

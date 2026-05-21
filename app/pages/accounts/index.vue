@@ -39,81 +39,79 @@
     </div>
 
     <!-- Table -->
-    <v-card v-else shadow="sm">
-      <AppTable :columns="columns" :rows="accounts" row-key="id">
-        <template #admin="{ row }">
-          <div class="flex items-center gap-3 py-2">
-            <v-avatar size="40" class="bg-gray-100 shrink-0">
-              <img v-if="row.avatarUrl" :src="row.avatarUrl" class="w-full h-full object-cover rounded-full" />
-              <span v-else class="text-sm font-bold text-gray-500">{{ initials(row.name) }}</span>
-            </v-avatar>
-            <div>
-              <div class="font-medium text-gray-800 flex items-center gap-2">
-                {{ row.name }}
-                <span v-if="row.id === currentUser?.id" class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">You</span>
-              </div>
-              <div class="text-xs text-gray-400">{{ row.email }}</div>
+    <AppTable v-else :columns="columns" :rows="accounts" row-key="id">
+      <template #admin="{ row }">
+        <div class="flex items-center gap-3 py-2">
+          <v-avatar size="40" class="bg-gray-100 shrink-0">
+            <img v-if="row.avatarUrl" :src="row.avatarUrl" class="w-full h-full object-cover rounded-full" />
+            <span v-else class="text-sm font-bold text-gray-500">{{ initials(row.name) }}</span>
+          </v-avatar>
+          <div>
+            <div class="font-medium text-gray-800 flex items-center gap-2">
+              {{ row.name }}
+              <span v-if="row.id === currentUser?.id" class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">You</span>
             </div>
+            <div class="text-xs text-gray-400">{{ row.email }}</div>
           </div>
-        </template>
+        </div>
+      </template>
 
-        <template #role>
-          <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-purple-100 text-purple-700">
-            Admin
-          </span>
-        </template>
+      <template #role>
+        <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-purple-100 text-purple-700">
+          Admin
+        </span>
+      </template>
 
-        <template #status="{ row }">
-          <span
-            class="inline-block px-2 py-0.5 text-xs font-semibold rounded"
-            :class="row.isBanned ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
-          >{{ row.isBanned ? 'Banned' : 'Active' }}</span>
-        </template>
+      <template #status="{ row }">
+        <span
+          class="inline-block px-2 py-0.5 text-xs font-semibold rounded"
+          :class="row.isBanned ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+        >{{ row.isBanned ? 'Banned' : 'Active' }}</span>
+      </template>
 
-        <template #created="{ row }">
-          <span class="text-xs text-gray-400">{{ formatDate(row.createdAt) }}</span>
-        </template>
+      <template #created="{ row }">
+        <span class="text-xs text-gray-400">{{ formatDate(row.createdAt) }}</span>
+      </template>
 
-        <template #lastActive="{ row }">
-          <span class="text-xs" :class="row.isBanned ? 'text-gray-300' : 'text-gray-500'">
-            {{ row.isBanned ? '—' : formatRelative(row.lastActiveAt) }}
-          </span>
-        </template>
+      <template #lastActive="{ row }">
+        <span class="text-xs" :class="row.isBanned ? 'text-gray-300' : 'text-gray-500'">
+          {{ row.isBanned ? '—' : formatRelative(row.lastActiveAt) }}
+        </span>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="flex gap-1">
-            <!-- Edit -->
-            <AppBtn variant="ghost" color="primary" size="sm" icon @click="openDialog(row)">
-              <i class="mdi mdi-pencil" />
-            </AppBtn>
+      <template #actions="{ row }">
+        <div class="flex gap-1">
+          <!-- Edit -->
+          <AppBtn variant="ghost" color="primary" size="sm" icon @click="openDialog(row)">
+            <i class="mdi mdi-pencil" />
+          </AppBtn>
 
-            <!-- Ban / Unban -->
-            <AppBtn
-              v-if="row.id !== currentUser?.id"
-              variant="ghost"
-              :color="row.isBanned ? 'primary' : 'danger'"
-              size="sm"
-              icon
-              @click="confirmBan(row)"
-            >
-              <i :class="row.isBanned ? 'mdi mdi-account-check' : 'mdi mdi-account-cancel'" />
-            </AppBtn>
+          <!-- Ban / Unban -->
+          <AppBtn
+            v-if="row.id !== currentUser?.id"
+            variant="ghost"
+            :color="row.isBanned ? 'primary' : 'danger'"
+            size="sm"
+            icon
+            @click="confirmBan(row)"
+          >
+            <i :class="row.isBanned ? 'mdi mdi-account-check' : 'mdi mdi-account-cancel'" />
+          </AppBtn>
 
-            <!-- Delete -->
-            <AppBtn
-              v-if="row.id !== currentUser?.id"
-              variant="ghost"
-              color="danger"
-              size="sm"
-              icon
-              @click="confirmDelete(row)"
-            >
-              <i class="mdi mdi-delete" />
-            </AppBtn>
-          </div>
-        </template>
-      </AppTable>
-    </v-card>
+          <!-- Delete -->
+          <AppBtn
+            v-if="row.id !== currentUser?.id"
+            variant="ghost"
+            color="danger"
+            size="sm"
+            icon
+            @click="confirmDelete(row)"
+          >
+            <i class="mdi mdi-delete" />
+          </AppBtn>
+        </div>
+      </template>
+    </AppTable>
 
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex justify-center mt-4">

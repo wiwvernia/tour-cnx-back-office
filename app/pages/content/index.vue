@@ -12,32 +12,32 @@
       <i class="mdi mdi-loading mdi-spin text-4xl text-gray-300" />
     </div>
 
-    <v-card v-else shadow="sm">
-      <AppTable :columns="columns" :rows="pages" row-key="slug">
-        <template #title="{ row }">
-          <div>
-            <span class="font-medium text-gray-800">{{ row.title }}</span>
-            <div class="text-xs text-gray-400">/{{ row.slug }}</div>
-          </div>
-        </template>
+    <AppTable v-else :columns="columns" :rows="pages" row-key="slug">
+      <template #title="{ row }">
+        <div>
+          <span class="font-medium text-gray-800">{{ row.title }}</span>
+          <div class="text-xs text-gray-400">/{{ row.slug }}</div>
+        </div>
+      </template>
 
-        <template #type="{ row }">
-          <span class="inline-block px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">
-            {{ row.type.charAt(0).toUpperCase() + row.type.slice(1) }}
-          </span>
-        </template>
+      <template #type="{ row }">
+        <span class="inline-block px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">
+          {{ row.type.charAt(0).toUpperCase() + row.type.slice(1) }}
+        </span>
+      </template>
 
-        <template #updatedAt="{ row }">
-          <span class="text-xs text-gray-400">{{ formatDate(row.updatedAt) }}</span>
-        </template>
+      <template #updatedAt="{ row }">
+        <span class="text-xs text-gray-400">{{ formatDate(row.updatedAt) }}</span>
+      </template>
 
-        <template #actions="{ row }">
-          <AppBtn variant="ghost" color="primary" size="sm" :to="'/content/' + row.slug" icon>
+      <template #actions="{ row }">
+        <div class="flex gap-1">
+          <AppBtn variant="outline" color="primary" size="sm" :to="'/content/' + row.slug" icon>
             <i class="mdi mdi-pencil" />
           </AppBtn>
-        </template>
-      </AppTable>
-    </v-card>
+        </div>
+      </template>
+    </AppTable>
   </div>
 </template>
 

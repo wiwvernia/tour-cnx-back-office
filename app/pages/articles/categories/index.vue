@@ -22,12 +22,14 @@
         <code class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">/{{ row.slug }}</code>
       </template>
       <template #actions="{ row }">
-        <AppBtn variant="ghost" color="primary" size="sm" :icon="true" @click="openDialog(row)">
-          <i class="mdi mdi-pencil text-base" />
-        </AppBtn>
-        <AppBtn variant="ghost" color="danger" size="sm" :icon="true" :disabled="saving" @click="deleteCategory(row)">
-          <i class="mdi mdi-delete text-base" />
-        </AppBtn>
+        <div class="flex gap-1">
+          <AppBtn variant="outline" color="primary" size="sm" :icon="true" @click="openDialog(row)">
+            <i class="mdi mdi-pencil text-base" />
+          </AppBtn>
+          <AppBtn variant="outline" color="danger" size="sm" :icon="true" :disabled="saving" @click="deleteCategory(row)">
+            <i class="mdi mdi-delete text-base" />
+          </AppBtn>
+        </div>
       </template>
     </AppTable>
 
