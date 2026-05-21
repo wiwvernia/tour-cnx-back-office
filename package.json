@@ -6,8 +6,10 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "preview": "npm run build && wrangler dev",
+    "postinstall": "nuxt prepare",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
     "@vueup/vue-quill": "^1.2.0",
@@ -18,7 +20,9 @@
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.14.0",
+    "nitro-cloudflare-dev": "^0.2.2",
     "sass": "^1.99.0",
-    "vite-plugin-vuetify": "^2.1.3"
+    "vite-plugin-vuetify": "^2.1.3",
+    "wrangler": "^4.93.0"
   }
 }
