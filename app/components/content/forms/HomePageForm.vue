@@ -57,6 +57,16 @@
               </div>
             </v-col>
           </v-row>
+
+          <!-- Stats Bar -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Stats Bar</label>
+            <div class="text-xs text-gray-400 mb-2">แสดงที่แถบด้านล่าง Hero — ตัวเลข / ป้ายกำกับ</div>
+            <div v-for="(stat, i) in form.hero.stats" :key="i" class="flex gap-2 mb-2 items-center">
+              <AppInput v-model="stat.value" placeholder="200+" class="w-28 shrink-0" />
+              <AppInput v-model="stat.label" placeholder="เส้นทางพิเศษ" class="flex-1" />
+            </div>
+          </div>
         </v-card-text>
       </v-card>
 
@@ -321,6 +331,11 @@ const form = reactive({
     subheading: 'ดิ่มด่ำกับวัฒนธรรมที่สุ่มลึกและการดูแลระดับพรีเมียม เพื่อให้การพักผ่อนของคุณคือความทรงจำที่ล้ำค่าที่สุดในชีวิต',
     primaryBtn: { text: 'จองทัวร์เลย', link: '/contact' },
     secondaryBtn: { text: 'ดูแพ็กเกจ', link: '/services' },
+    stats: [
+      { value: '200+', label: 'เส้นทางพิเศษ' },
+      { value: '5,000+', label: 'นักท่องเที่ยว' },
+      { value: '4.9★', label: 'คะแนนเฉลี่ย' },
+    ],
   },
   philosophy: {
     sectionLabel: 'OUR PHILOSOPHY',
