@@ -13,14 +13,17 @@
           type="email"
           placeholder="admin@example.com"
           :disabled="loading"
+          :error="emailError"
           @keyup.enter="submit"
         />
         <AppInput
           v-model="password"
           label="Password"
           type="password"
+          show-password-toggle
           placeholder="••••••••"
           :disabled="loading"
+          :error="passwordError"
           @keyup.enter="submit"
         />
 
@@ -51,11 +54,18 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+const emailError = ref('')
+const passwordError = ref('')
 
 async function submit() {
-  if (!email.value || !password.value) return
-  loading.value = true
+  emailError.value = ''
+  passwordError.value = ''
   error.value = ''
+
+  if (!email.value) { emailError.value = 'Email is required'; return }
+  if (!password.value) { passwordError.value = 'Password is required'; return }
+
+  loading.value = true
   try {
     await login(email.value, password.value)
     await router.push('/')
@@ -64,7 +74,7 @@ async function submit() {
     if (msg === 'account is banned') {
       error.value = 'Your account has been banned. Please contact support.'
     } else if (msg === 'invalid credentials') {
-      error.value = 'Invalid email or password.'
+      passwordError.value = 'Invalid email or password.'
     } else {
       error.value = 'Something went wrong. Please try again.'
     }

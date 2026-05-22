@@ -19,7 +19,7 @@
     <div>
       <div v-if="!isNew" class="flex items-center justify-between mb-2">
         <label class="block text-sm font-medium text-gray-700">Password</label>
-        <button type="button" class="text-xs text-blue-600 hover:underline" @click="changePassword = !changePassword">
+        <button type="button" class="text-xs text-blue-600 hover:underline" @click="onToggleChangePassword">
           {{ changePassword ? 'Cancel' : 'Change password' }}
         </button>
       </div>
@@ -28,7 +28,10 @@
         v-model="form.password"
         :label="isNew ? 'Password *' : 'New Password'"
         type="password"
+        show-password-toggle
         placeholder="Min. 8 characters"
+        :error="passwordError"
+        @input="onPasswordInput"
       />
     </div>
   </div>
@@ -44,6 +47,7 @@ const props = defineProps({
 
 const avatarInput = ref(null)
 const changePassword = ref(false)
+const passwordError = ref('')
 
 const form = reactive({
   name: '',
@@ -53,6 +57,32 @@ const form = reactive({
   ...props.initialData,
 })
 
+function onToggleChangePassword() {
+  changePassword.value = !changePassword.value
+  form.password = ''
+  passwordError.value = ''
+}
+
+function onPasswordInput() {
+  if (form.password && form.password.length < 8) {
+    passwordError.value = 'Password must be at least 8 characters'
+  } else {
+    passwordError.value = ''
+  }
+}
+
+function validate() {
+  if ((props.isNew || changePassword.value) && form.password && form.password.length < 8) {
+    passwordError.value = 'Password must be at least 8 characters'
+    return false
+  }
+  if (props.isNew && !form.password) {
+    passwordError.value = 'Password is required'
+    return false
+  }
+  return true
+}
+
 function handleAvatar(e) {
   const file = e.target.files[0]
   if (!file) return
@@ -61,5 +91,5 @@ function handleAvatar(e) {
   reader.readAsDataURL(file)
 }
 
-defineExpose({ getData: () => ({ ...form }) })
+defineExpose({ getData: () => ({ ...form }), validate })
 </script>

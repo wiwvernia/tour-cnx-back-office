@@ -272,6 +272,7 @@ function openDialog(account = null) {
 async function saveAccount() {
   const data = formRef.value?.getData()
   if (!data?.name || !data?.email) return
+  if (!formRef.value?.validate()) return
 
   saving.value = true
   try {
