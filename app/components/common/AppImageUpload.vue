@@ -4,24 +4,24 @@
 
     <!-- Upload Zone -->
     <div
-      class="relative border-2 border-dashed transition-colors cursor-pointer overflow-hidden flex items-center justify-center"
+      class="relative border-2 border-dashed transition-colors cursor-pointer overflow-hidden"
       :class="[
         circle ? 'rounded-full' : 'rounded-lg',
         modelValue ? 'border-indigo-300 hover:border-indigo-400' : 'border-gray-300 hover:border-gray-400',
       ]"
-      :style="circle ? 'width:100px;height:100px;' : `min-height:${minHeight};`"
+      :style="zoneStyle"
       @click="fileInput?.click()"
     >
       <!-- Uploading -->
-      <div v-if="uploading" class="flex flex-col items-center gap-2 py-8">
+      <div v-if="uploading" class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/80">
         <i class="mdi mdi-loading mdi-spin text-3xl text-gray-400" />
         <span class="text-xs text-gray-400">Uploading...</span>
       </div>
 
-      <!-- Preview (rectangular) -->
-      <template v-else-if="modelValue && !circle">
-        <img :src="modelValue" class="w-full object-cover" :style="`max-height:${minHeight};`" />
-        <div class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+      <!-- Preview -->
+      <template v-else-if="modelValue">
+        <img :src="modelValue" class="absolute inset-0 w-full h-full object-cover" />
+        <div v-if="!circle" class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
           <button
             type="button"
             class="text-xs text-white bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded"
@@ -35,15 +35,10 @@
         </div>
       </template>
 
-      <!-- Preview (circle) -->
-      <template v-else-if="modelValue && circle">
-        <img :src="modelValue" class="w-full h-full object-cover" />
-      </template>
-
       <!-- Placeholder -->
-      <div v-else class="text-center py-8 px-4">
+      <div v-else class="absolute inset-0 flex flex-col items-center justify-center px-4">
         <i class="mdi mdi-image-plus text-4xl text-gray-300 block mb-2" />
-        <p class="text-xs text-gray-400">{{ placeholder || 'คลิกเพื่ออัปโหลด' }}</p>
+        <p class="text-xs text-gray-400 text-center">{{ placeholder || 'คลิกเพื่ออัปโหลด' }}</p>
       </div>
     </div>
 
@@ -113,6 +108,12 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const { request } = useApi()
+
+const zoneStyle = computed(() => {
+  if (props.circle) return 'width:100px;height:100px;'
+  if (!isNaN(props.aspectRatio)) return `aspect-ratio:${props.aspectRatio};width:100%;`
+  return `min-height:${props.minHeight};`
+})
 
 const fileInput  = ref(null)
 const cropperImg = ref(null)
