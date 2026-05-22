@@ -97,25 +97,14 @@
       <v-card>
         <v-card-title class="pa-4 pb-2 text-base font-semibold">Featured / Meta Image</v-card-title>
         <v-card-text class="flex flex-col gap-4">
-          <div
-            class="border-2 border-dashed rounded-lg pa-6 text-center cursor-pointer hover:bg-gray-50 transition-colors"
-            style="border-color: #ccc;"
-            @click="triggerUpload"
-          >
-            <div v-if="imageUploading" class="flex items-center justify-center py-4">
-              <i class="mdi mdi-loading mdi-spin text-3xl text-gray-400" />
-            </div>
-            <div v-else-if="!form.metaImageUrl">
-              <v-icon size="40" color="grey">mdi-image-plus</v-icon>
-              <p class="text-sm text-gray-500 mt-2">Click to upload image</p>
-              <p class="text-xs text-gray-400 mt-1">PNG, JPG, WebP. Auto-converted to WebP.</p>
-            </div>
-            <div v-else>
-              <img :src="form.metaImageUrl" class="rounded" style="max-width:100%;max-height:180px;object-fit:cover" />
-              <AppBtn variant="ghost" color="danger" size="sm" class="mt-2" @click.stop="form.metaImageUrl = ''">Remove</AppBtn>
-            </div>
-          </div>
-          <input ref="fileInput" type="file" accept="image/*" class="d-none" @change="handleImageUpload" />
+          <AppImageUpload
+            v-model="form.metaImageUrl"
+            hint="1200×630px แนะนำ (16:9) — ใช้สำหรับ card และ OG Image"
+            :aspect-ratio="1200/630"
+            context="services"
+            min-height="180px"
+            placeholder="คลิกเพื่ออัปโหลดรูป"
+          />
           <AppInput v-model="form.metaImageAlt" label="Image Alt Text" placeholder="Describe the image for screen readers and SEO" hint="Important for accessibility and image search" />
         </v-card-text>
       </v-card>
@@ -131,8 +120,6 @@ const props = defineProps({
   isNew:       { type: Boolean, default: true },
 })
 
-const { request } = useApi()
-
 const statusOptions = [
   { label: 'Draft', value: 'draft' },
   { label: 'Published', value: 'published' },
@@ -141,8 +128,6 @@ const statusOptions = [
 
 const categoryOptions = ref([])
 const seoExpanded = ref(true)
-const fileInput = ref(null)
-const imageUploading = ref(false)
 
 const form = reactive({
   title: '',
@@ -178,25 +163,6 @@ onMounted(async () => {
   }
 })
 
-function triggerUpload() { fileInput.value?.click() }
-
-async function handleImageUpload(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  imageUploading.value = true
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-    if (form.metaImageAlt) formData.append('altText', form.metaImageAlt)
-    const res = await request('/media/upload', { method: 'POST', body: formData })
-    form.metaImageUrl = res.data.url
-  } catch (e) {
-    console.error(e)
-  } finally {
-    imageUploading.value = false
-    e.target.value = ''
-  }
-}
 
 defineExpose({ getData: () => ({ ...form }) })
 </script>

@@ -12,29 +12,15 @@
         <v-card-text class="flex flex-col gap-4">
           <!-- BG Image -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">Background Image</label>
-            <div
-              class="relative border-2 border-dashed rounded-lg overflow-hidden cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center bg-gray-50"
-              style="min-height: 192px;"
-              @click="triggerUpload('heroImage')"
-            >
-              <div v-if="imageUploads.heroBg" class="flex flex-col items-center justify-center py-8">
-                <i class="mdi mdi-loading mdi-spin text-5xl text-gray-400" />
-                <p class="text-sm text-gray-500 mt-2">Uploading to cloud...</p>
-              </div>
-              <img
-                v-else-if="form.hero.bgImage"
-                :src="form.hero.bgImage"
-                class="w-full h-48 object-cover"
-              />
-              <div v-else class="text-center py-8">
-                <i class="mdi mdi-image-plus text-5xl text-gray-300" />
-                <p class="mt-2 text-sm text-gray-400">Upload hero background image</p>
-                <p class="text-xs text-gray-300 mt-1">Recommended: 1920×1080px</p>
-              </div>
-            </div>
-            <input ref="heroImageInput" type="file" class="hidden" accept="image/*" @change="e => handleImage(e, 'hero', 'bgImage')" />
-            <!-- [AUDIT FIX] Alt Text -->
+            <AppImageUpload
+              v-model="form.hero.bgImage"
+              label="Background Image"
+              hint="1920×1080px แนะนำ (16:9) — รูปเต็มหน้าจอ Hero"
+              :aspect-ratio="16/9"
+              context="pages"
+              min-height="192px"
+              placeholder="อัปโหลดรูป Background หน้าแรก"
+            />
             <AppInput v-model="form.hero.bgImageAlt" label="Background Image Alt Text" placeholder="Aerial view of Chiang Mai ancient temples" class="mt-3" />
           </div>
 
@@ -86,28 +72,15 @@
               </div>
             </v-col>
             <v-col cols="12" md="6">
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Section Image</label>
-              <div
-                class="border-2 border-dashed rounded-lg overflow-hidden cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center bg-gray-50"
-                style="min-height: 160px;"
-                @click="triggerUpload('philosophyImage')"
-              >
-                <div v-if="imageUploads.philosophyImg" class="flex flex-col items-center justify-center py-6">
-                  <i class="mdi mdi-loading mdi-spin text-4xl text-gray-400" />
-                  <p class="text-xs text-gray-500 mt-2">Uploading...</p>
-                </div>
-                <img
-                  v-else-if="form.philosophy.image"
-                  :src="form.philosophy.image"
-                  class="w-full h-40 object-cover"
-                />
-                <div v-else class="text-center py-6">
-                  <i class="mdi mdi-image-plus text-4xl text-gray-300" />
-                  <p class="mt-1 text-xs text-gray-400">Upload image</p>
-                </div>
-              </div>
-              <input ref="philosophyImageInput" type="file" class="hidden" accept="image/*" @change="e => handleImage(e, 'philosophy', 'image')" />
-              <!-- [AUDIT FIX] Alt Text -->
+              <AppImageUpload
+                v-model="form.philosophy.image"
+                label="Section Image"
+                hint="800×600px แนะนำ (4:3)"
+                :aspect-ratio="4/3"
+                context="pages"
+                min-height="160px"
+                placeholder="อัปโหลดรูป Philosophy"
+              />
               <AppInput v-model="form.philosophy.imageAlt" label="Image Alt Text" placeholder="Traditional Lanna craftsmanship" class="mt-3" />
             </v-col>
           </v-row>
@@ -274,12 +247,6 @@
 <script setup>
 import { ref, reactive, watch } from 'vue'
 
-const { request } = useApi()
-
-const imageUploads = reactive({
-  heroBg: false,
-  philosophyImg: false,
-})
 
 // ─── Drag & Drop ──────────────────────────────────────────────────────────────
 const dragIndex = ref(null)
@@ -305,8 +272,6 @@ const props = defineProps({
   initialData: { type: Object, default: () => ({}) },
 })
 
-const heroImageInput = ref(null)
-const philosophyImageInput = ref(null)
 
 // [AUDIT FIX] Section reorder & visibility
 const sectionOrder = ref([
@@ -408,31 +373,6 @@ watch(() => props.initialData, (newVal) => {
   if (d.footer) Object.assign(form.footer, d.footer)
 }, { immediate: true, deep: true })
 
-function triggerUpload(ref) {
-  if (ref === 'heroImage') heroImageInput.value?.click()
-  if (ref === 'philosophyImage') philosophyImageInput.value?.click()
-}
-
-async function handleImage(e, section, field) {
-  const file = e.target.files[0]
-  if (!file) return
-  
-  const uploadKey = section === 'hero' ? 'heroBg' : 'philosophyImg'
-  imageUploads[uploadKey] = true
-  
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('context', 'pages')
-    const res = await request('/media/upload', { method: 'POST', body: formData })
-    form[section][field] = res.data.url
-  } catch (err) {
-    console.error('Image upload failed:', err)
-  } finally {
-    imageUploads[uploadKey] = false
-    e.target.value = ''
-  }
-}
 
 defineExpose({
   getData: () => ({

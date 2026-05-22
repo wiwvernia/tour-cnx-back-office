@@ -37,21 +37,15 @@
       <v-card>
         <v-card-title class="pa-4 pb-2 text-base font-semibold">Trip Photo (Optional)</v-card-title>
         <v-card-text>
-          <p class="text-sm text-gray-500 mb-4">Some review layouts feature a photo from the actual trip.</p>
-          <div
-            class="border-2 border-dashed rounded-lg pa-8 text-center cursor-pointer hover:bg-gray-50 transition-colors"
-            @click="triggerTripPhoto"
-          >
-            <div v-if="tripUploading" class="flex items-center justify-center py-4">
-              <i class="mdi mdi-loading mdi-spin text-3xl text-gray-400" />
-            </div>
-            <div v-else-if="!form.tripPhotoUrl">
-              <i class="mdi mdi-camera-plus text-5xl text-gray-300" />
-              <p class="mt-2 text-sm text-gray-500">Upload trip photo</p>
-            </div>
-            <img v-else :src="form.tripPhotoUrl" class="rounded max-h-[300px] mx-auto object-cover" />
-          </div>
-          <input ref="tripPhotoInput" type="file" class="hidden" accept="image/*" @change="handleTripPhoto" />
+          <p class="text-sm text-gray-500 mb-3">Some review layouts feature a photo from the actual trip.</p>
+          <AppImageUpload
+            v-model="form.tripPhotoUrl"
+            hint="800×600px แนะนำ (4:3) — รูปถ่ายระหว่างทริป"
+            :aspect-ratio="4/3"
+            context="reviews"
+            min-height="200px"
+            placeholder="อัปโหลดรูปทริป"
+          />
         </v-card-text>
       </v-card>
     </v-col>
@@ -62,20 +56,14 @@
       <v-card class="mb-4">
         <v-card-title class="pa-4 pb-2 text-base font-semibold">Reviewer Information</v-card-title>
         <v-card-text class="flex flex-col gap-4">
-          <div class="flex flex-col items-center gap-2">
-            <div
-              class="border-2 border-dashed rounded-full cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center"
-              style="width:100px;height:100px;overflow:hidden;"
-              @click="triggerAvatar"
-            >
-              <div v-if="avatarUploading" class="flex items-center justify-center w-full h-full">
-                <i class="mdi mdi-loading mdi-spin text-3xl text-gray-400" />
-              </div>
-              <img v-else-if="form.reviewerPhotoUrl" :src="form.reviewerPhotoUrl" class="w-full h-full object-cover rounded-full" />
-              <i v-else class="mdi mdi-account-plus text-5xl text-gray-300" />
-            </div>
-            <button type="button" class="text-sm text-blue-600 hover:underline" @click="triggerAvatar">Change Photo</button>
-            <input ref="avatarInput" type="file" class="hidden" accept="image/*" @change="handleAvatar" />
+          <div class="flex flex-col items-center">
+            <AppImageUpload
+              v-model="form.reviewerPhotoUrl"
+              hint="400×400px (1:1)"
+              :aspect-ratio="1"
+              context="reviews"
+              circle
+            />
           </div>
 
           <AppInput v-model="form.reviewerName" label="Full Name *" placeholder="e.g. คุณสมชาย ใจดี" />
@@ -139,11 +127,6 @@ const props = defineProps({
 
 const { request } = useApi()
 
-const avatarInput = ref(null)
-const tripPhotoInput = ref(null)
-const avatarUploading = ref(false)
-const tripUploading = ref(false)
-
 const serviceOptions = ref([])
 const articleOptions = ref([])
 
@@ -195,43 +178,6 @@ function toggleArticle(id) {
   const index = form.relatedArticles.indexOf(id)
   if (index === -1) form.relatedArticles.push(id)
   else form.relatedArticles.splice(index, 1)
-}
-
-function triggerAvatar() { avatarInput.value?.click() }
-function triggerTripPhoto() { tripPhotoInput.value?.click() }
-
-async function handleAvatar(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  avatarUploading.value = true
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await request('/media/upload', { method: 'POST', body: formData })
-    form.reviewerPhotoUrl = res.data.url
-  } catch (err) {
-    console.error(err)
-  } finally {
-    avatarUploading.value = false
-    e.target.value = ''
-  }
-}
-
-async function handleTripPhoto(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  tripUploading.value = true
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await request('/media/upload', { method: 'POST', body: formData })
-    form.tripPhotoUrl = res.data.url
-  } catch (err) {
-    console.error(err)
-  } finally {
-    tripUploading.value = false
-    e.target.value = ''
-  }
 }
 
 defineExpose({ getData: () => ({ ...form }) })
